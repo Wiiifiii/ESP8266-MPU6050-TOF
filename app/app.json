@@ -24,6 +24,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "59e221e1-5e2d-48d7-97ba-360fa98d6c72"
+      }
+    },
+    "owner": "wiiifiii"
   }
 }
