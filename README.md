@@ -411,3 +411,24 @@ Once your ESP8266 StartUnit is at `192.168.4.2` and FinishUnit at `192.168.4.3`,
 ---
 
 Happy testing!
+
+---
+
+## Troubleshooting
+
+### IntelliSense Errors (Red Squiggles)
+
+If you see red squiggles in VS Code saying "cannot open source file" for ESP8266 libraries:
+
+1. **Reload VS Code window**: `Ctrl+Shift+P` → "Developer: Reload Window"
+2. **Check C++ configuration**: The `.vscode/c_cpp_properties.json` file should be configured for PlatformIO
+3. **Install C++ Extension**: Make sure you have the "C/C++" extension by Microsoft installed
+
+The code will still compile and upload correctly even with red squiggles - this is just an editor display issue.
+
+### Port Issues
+
+If you get "could not open port" errors:
+- Check which COM port your ESP8266 is connected to in Device Manager
+- Make sure only one device is connected at a time
+- The `platformio.ini` file now auto-detects ports, so it should work on any available port
