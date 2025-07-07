@@ -1,71 +1,90 @@
-import React, { useContext, useState, useRef } from 'react';
+// screens/DistanceScreen.js
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  TextInput,
-  Button,
   StyleSheet,
-  Keyboard            // ← import Keyboard
+  SafeAreaView,
+  Platform,
+  StatusBar,
 } from 'react-native';
-import { LapContext } from '../context/LapContext';
-import StepperHeader  from '../components/StepperHeader';
+import NetInfo from '@react-native-community/netinfo';
+import StepperHeader from '../components/StepperHeader';
+import api from '../api';
 
-export default function DistanceScreen({ navigation }) {
-  const { setTrackDistance, resetSession } = useContext(LapContext);
-  const [input, setInput] = useState('');
-  const inputRef = useRef(null);            // ← create a ref
+export default function DistanceScreen() {
+  const [wifiOK,    setWifiOK]    = useState(false);
+  const [distance,  setDistance]  = useState(0);
 
-  const onNext = () => {
-    const dist = parseFloat(input);
-    if (!dist || dist <= 0) {
-      return alert('Enter a valid distance');
-    }
-    // hide keyboard and blur the field
-    Keyboard.dismiss();
-    inputRef.current?.blur();
+  // 1) Watch for Wi-Fi connectivity
+  useEffect(() => {
+    const unsub = NetInfo.addEventListener(state => {
+      setWifiOK(state.isConnected && state.type === 'wifi');
+    });
+    return () => unsub();
+  }, []);
 
-    resetSession();
-    setTrackDistance(dist);
-    navigation.replace('Connect');
-  };
+  // 2) Poll every second for distance
+  useEffect(() => {
+    if (!wifiOK) return;
+    const iv = setInterval(async () => {
+      try {
+        const res = await api.get('/data');
+        setDistance(res.data.distance);
+      } catch (e) {
+        console.log('[Distance] network error:', e.message);
+      }
+    }, 1000);
+    return () => clearInterval(iv);
+  }, [wifiOK]);
 
   return (
-    <View style={styles.screen}>
-      <StepperHeader stepIndex={0} />
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.screen}>
+        <StepperHeader stepIndex={0} totalSteps={6} />
 
-      <View style={styles.body}>
-        <Text style={styles.label}>Track length (m):</Text>
-        <TextInput
-          ref={inputRef}                    // ← assign ref here
-          style={styles.input}
-          keyboardType="numeric"
-          placeholder="e.g. 100"
-          value={input}
-          onChangeText={setInput}
-
-          returnKeyType="done"             // ← show “Done” on keyboard
-          blurOnSubmit                   // ← auto-blur on submit
-          onSubmitEditing={onNext}        // ← call onNext when “Done” pressed
-        />
+        <Text style={styles.header}>Distance to Start</Text>
+        <Text style={styles.distance}>
+          {distance.toFixed(1)} m
+        </Text>
+        <Text style={styles.footerNote}>
+          {wifiOK ? '✔️ Connected' : '⭘ Wi-Fi lost'}
+        </Text>
       </View>
-
-      <View style={styles.footer}>
-        <Button title="Next" color="#7055e1" onPress={onNext} />
-      </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: '#f7f7f7' },
-  body:   { flex:1, justifyContent:'center', alignItems:'center', padding:20 },
-  label:  { fontSize:18, color:'#2b2a33', marginBottom:12 },
-  input:  {
-    fontSize:24,
-    width:120,
-    textAlign:'center',
-    borderBottomWidth:2,
-    borderColor:'#7055e1'
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#f7f7f7',
+    paddingTop:
+      Platform.OS === 'android'
+        ? StatusBar.currentHeight
+        : 0,
   },
-  footer: { padding:20 },
+  screen: {
+    flex: 1,
+    backgroundColor: '#f7f7f7',
+    padding: 20,
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    color: '#2b2a33',
+  },
+  distance: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#7055e1',
+  },
+  footerNote: {
+    fontSize: 14,
+    marginTop: 20,
+    textAlign: 'center',
+    color: '#999',
+  },
 });

@@ -34,7 +34,7 @@ export default function FinishedScreen({ navigation }) {
     const summary = {
       id:        Date.now().toString(),
       distance:  trackDistance,
-      duration,          // string like "12.34"
+      duration,
       avgSpeed,
       maxSpeed,
       avgAccel,
@@ -44,7 +44,6 @@ export default function FinishedScreen({ navigation }) {
 
     setLapHistory(prev => {
       const all = [summary, ...prev];
-      // keep only last 10
       return all.slice(0, 10);
     });
   }, []);

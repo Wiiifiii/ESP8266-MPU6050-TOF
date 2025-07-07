@@ -25,8 +25,10 @@ const customStyles = {
   stepIndicatorFinishedColor: '#7055e1',
   stepIndicatorUnFinishedColor: '#2b2a33',
   stepIndicatorCurrentColor: '#fe4040',
-  stepIndicatorLabelFontSize: 0,      // hide numbers
-  currentStepIndicatorLabelFontSize: 0,
+  stepIndicatorLabelFontSize: 1,      // must be >0
+  currentStepIndicatorLabelFontSize: 1,
+  stepIndicatorLabelColor: 'transparent',
+  currentStepIndicatorLabelColor: 'transparent',
   labelColor: '#2b2a33',
   labelSize: 12,
   currentStepLabelColor: '#fe4040'

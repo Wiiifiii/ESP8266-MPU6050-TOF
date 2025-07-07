@@ -1,8 +1,7 @@
-import { registerRootComponent } from 'expo';
+// index.js
+import 'react-native-gesture-handler';          // required for React Navigation
+import { registerRootComponent } from 'expo';  // ensures your App is the entry point
 
 import App from './App';
 
-// registerRootComponent calls AppRegistry.registerComponent('main', () => App);
-// It also ensures that whether you load the app in Expo Go or in a native build,
-// the environment is set up appropriately
 registerRootComponent(App);

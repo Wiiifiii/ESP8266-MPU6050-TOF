@@ -1,75 +1,70 @@
-// FinishUnit/src/main.cpp
-
+// FinishUnit/main.cpp
 #include <Wire.h>
 #include <ESP8266WiFi.h>
-#include <ESP8266HTTPClient.h>
+#include <ESP8266WebServer.h>
 #include <Adafruit_VL53L1X.h>
 
-// — Wi-Fi + Static IP —
-const char* SSID = "RaceTimerNet";
-IPAddress   STA_IP(192,168,4,3);
-IPAddress   STA_GW(192,168,4,1);
-IPAddress   STA_SN(255,255,255,0);
+// — Wi-Fi settings —
+const char*    SSID_FIN    = "RaceTimerNet";
+IPAddress      STA_IP_FIN  (192,168,4,3);
+IPAddress      STA_GW_FIN  (192,168,4,1);
+IPAddress      STA_SN_FIN  (255,255,255,0);
 
-// — CarUnit host (for POST /finish) —
-const char* CAR_HOST = "http://192.168.4.1";
+ESP8266WebServer serverFin(80);
+Adafruit_VL53L1X   tofFin = Adafruit_VL53L1X();
 
-// — TOF sensor —
-Adafruit_VL53L1X tof;
+const float FINISH_THRESH = 0.05f; // 5 cm
+bool finished = false;
+float distF = 0;
 
-// — Trigger threshold (meters) —
-const float TRIGGER_THRESH = 0.05f;
-bool            triggered  = false;
-
-// — WiFiClient instance for HTTP —
-WiFiClient wifiClient;
-
-void setup(){
-  Serial.begin(115200);
-  Wire.begin();
-
-  // Join the open AP, static IP
-  WiFi.mode(WIFI_STA);
-  WiFi.config(STA_IP, STA_GW, STA_SN);
-  WiFi.begin(SSID);
-  Serial.print("📶 FinishUnit joining");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(300);
-    Serial.print(".");
+void handleStatusFin() {
+  if (tofFin.dataReady()) {
+    uint16_t mm = tofFin.distance();
+    tofFin.clearInterrupt();
+    distF = mm / 1000.0f;
   }
-  Serial.print(" ✓ IP=");
-  Serial.println(WiFi.localIP());
-
-  // Initialize VL53L1X
-  if (!tof.begin()) {
-    Serial.println("❌ VL53L1X not found!");
-    while (1) delay(10);
+  if (!finished && distF <= FINISH_THRESH) {
+    finished = true;
+    Serial.println("🏁 Finish triggered");
   }
-  tof.setTimingBudget(20);   // 20 ms per measurement
-  tof.startRanging();        // continuous mode
+  String json = "{";
+  json += "\"distance\":" + String(distF,3) + ",";
+  json += "\"finished\":" + String(finished ? "true" : "false");
+  json += "}";
+  serverFin.send(200, "application/json", json);
 }
 
-void loop(){
-  // Read distance when ready
-  if (!triggered && tof.dataReady()) {
-    uint16_t mm = tof.distance();
-    tof.clearInterrupt();
-    float m = mm / 1000.0f;
+void setup() {
+  Serial.begin(115200);
+  Serial.println();
+  Serial.println("⏳ FinishUnit Booting...");
 
-    // If we cross the line, POST once
-    if (m <= TRIGGER_THRESH) {
-      HTTPClient http;
-      String url = String(CAR_HOST) + "/finish";
+  // I²C on non-strap pins
+  Wire.begin(4, 5);
+  Serial.println("✅ I2C on SDA=GPIO4, SCL=GPIO5");
 
-      // **NEW** API: supply a WiFiClient + URL
-      http.begin(wifiClient, url);
-      int code = http.POST("");
-      Serial.printf("POST /finish → %d\n", code);
-      http.end();
+  // Join CarUnit AP
+  WiFi.mode(WIFI_STA);
+  WiFi.config(STA_IP_FIN, STA_GW_FIN, STA_SN_FIN);
+  WiFi.begin(SSID_FIN);
+  Serial.print("📶 FinishUnit joining");
+  while (WiFi.status() != WL_CONNECTED) { delay(300); Serial.print('.'); }
+  Serial.print(" ✓ IP="); Serial.println(WiFi.localIP());
 
-      triggered = true;
-    }
+  // VL53L1X init
+  if (!tofFin.begin()) {
+    Serial.println("❌ VL53L1X not found");
+    while (1) delay(10);
   }
+  tofFin.startRanging();
+  Serial.println("✅ VL53L1X ranging");
 
-  delay(100);
+  // HTTP route
+  serverFin.on("/status", HTTP_GET, handleStatusFin);
+  serverFin.begin();
+  Serial.println("✔ FinishUnit HTTP up");
+}
+
+void loop() {
+  serverFin.handleClient();
 }

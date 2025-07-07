@@ -1,98 +1,61 @@
-// app/screens/RunningScreen.js
-import React, { useContext, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+// app/screens/ReadyScreen.js
+import React, { useState, useEffect } from 'react';
+import { View, Text, Button, StyleSheet } from 'react-native';
+import NetInfo from '@react-native-community/netinfo';
 import StepperHeader from '../components/StepperHeader';
-import { LapContext } from '../context/LapContext';
+import api from '../api'; // <-- axios instance
 
-export default function RunningScreen({ navigation }) {
-  const {
-    startTime,
-    trackDistance,
-    traveledDistance, setTraveledDistance,
-    speed,           setSpeed,
-    accel,           setAccel,
-    readings,        setReadings,
-    setFinishTime
-  } = useContext(LapContext);
+export default function ReadyScreen({ navigation }) {
+  const [wifiOK, setWifiOK] = useState(false);
+  const [ready,  setReady]  = useState(false);
 
-  const MIN_DISPLAY_MS   = 2000;
-  const runStartRef      = useRef(Date.now());
-  const INTERVAL         = 100;
-
+  // Wi-Fi watcher
   useEffect(() => {
-    const id = setInterval(async () => {
+    const unsub = NetInfo.addEventListener(state => {
+      setWifiOK(state.isConnected && state.type === 'wifi');
+    });
+    return () => unsub();
+  }, []);
+
+  // Poll start signal (~500 ms)
+  useEffect(() => {
+    if (!wifiOK) return;
+    const iv = setInterval(async () => {
       try {
-        // fetch from your CarUnit
-        const res = await fetch('http://192.168.4.1/data');
-        const { speed: s, ax } = await res.json();
-        const now = Date.now();
-        const dt  = (now - (readings.lastT || startTime)) * 1e-3;
-
-        // accumulate
-        setTraveledDistance(d => Math.min(trackDistance, d + s * dt));
-        setSpeed(s);
-        setAccel(ax * 9.81);
-        setReadings(r => {
-          r.lastT = now;
-          return [...r, { t:now, speed:s, accel:ax*9.81 }];
-        });
-
-        // check finish
-        if (traveledDistance + s*dt >= trackDistance) {
-          clearInterval(id);
-          const elapsedRun = now - runStartRef.current;
-          const waitMs     = Math.max(0, MIN_DISPLAY_MS - elapsedRun);
-          setTimeout(() => {
-            setFinishTime(now);
-            navigation.replace('Finished');
-          }, waitMs);
-        }
-      } catch {
-        // optionally show “no signal”
+        const res = await api.get('/status');
+        console.log('[Ready] status:', res.status);
+        setReady(res.data.ready);
+      } catch (e) {
+        console.log('[Ready] error:', e.message);
       }
-    }, INTERVAL);
-
-    return () => clearInterval(id);
-  }, [navigation, startTime, trackDistance, readings, traveledDistance]);
-
-  const elapsed  = ((Date.now() - startTime)/1000).toFixed(2);
-  const percent  = Math.min(100, (traveledDistance/trackDistance)*100).toFixed(0);
+    }, 500);
+    return () => clearInterval(iv);
+  }, [wifiOK]);
 
   return (
     <View style={styles.screen}>
-      <StepperHeader stepIndex={4} />
-      <View style={styles.body}>
-        <Text style={styles.timer}>⏱ {elapsed}s</Text>
-
-        <View style={styles.barBackground}>
-          <View style={[styles.barFill, { width:`${percent}%` }]} />
-        </View>
-        <Text style={styles.sub}>{traveledDistance.toFixed(2)} / {trackDistance} m</Text>
-
-        <View style={styles.row}>
-          <View style={styles.stat}>
-            <Text style={styles.statLabel}>Speed</Text>
-            <Text style={styles.statValue}>{speed.toFixed(2)} m/s</Text>
-          </View>
-          <View style={styles.stat}>
-            <Text style={styles.statLabel}>Accel</Text>
-            <Text style={styles.statValue}>{accel.toFixed(2)} m/s²</Text>
-          </View>
-        </View>
+      <StepperHeader currentStep={4} totalSteps={6} />
+      <Text style={styles.header}>Ready to Start</Text>
+      <Text style={styles.instruction}>Waiting for GO signal…</Text>
+      <Text style={styles.statusLine}>
+        {ready ? '🟢 GO!' : '⏳ Waiting'}
+      </Text>
+      <View style={styles.footer}>
+        <Button
+          title="Start Run"
+          disabled={!ready}
+          onPress={() => navigation.navigate('Running')}
+          color={ready ? '#7055e1' : '#999'}
+        />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen:        { flex:1, backgroundColor:'#f7f7f7' },
-  body:          { flex:1, padding:20 },
-  timer:         { fontSize:32, color:'#2b2a33', textAlign:'center', marginVertical:10 },
-  barBackground: { height:8, width:'100%', backgroundColor:'#ddd', borderRadius:4, overflow:'hidden', marginVertical:10 },
-  barFill:       { height:'100%', backgroundColor:'#7055e1' },
-  sub:           { textAlign:'center', color:'#7055e1', marginBottom:30 },
-  row:           { flexDirection:'row', justifyContent:'space-around' },
-  stat:          { alignItems:'center' },
-  statLabel:     { color:'#2b2a33' },
-  statValue:     { fontSize:24, fontWeight:'bold', color:'#7055e1' },
+  screen:      { flex:1, backgroundColor:'#f7f7f7', padding:20 },
+  header:      { fontSize:24, fontWeight:'bold', marginBottom:16, color:'#2b2a33' },
+  instruction: { fontSize:16, marginBottom:20, color:'#2b2a33' },
+  statusLine:  { fontSize:32, textAlign:'center', marginVertical:20 },
+  footer:      { alignItems:'center', marginTop:40 },
 });
