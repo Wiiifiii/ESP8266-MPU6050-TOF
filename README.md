@@ -1,6 +1,70 @@
 # Android “Preview” Build & Install with EAS
 
-Use these steps whenever you want to generate a standalone Android APK for quick testing or sharing (e.g. with your teacher).
+Use these steps whenever you want to generate a standalone Android ## Updating Firmware on Your ESP8266 Devices
+
+Whenever you've made changes to a unit's `main.cpp`, use these commands to build, upload, and verify on each device.
+
+### Prerequisites (Windows Setup)
+
+If you get a `pio : The term 'pio' is not recognized` error, you need to install PlatformIO CLI:
+
+1. **Install Python** (if not already installed):
+   ```powershell
+   winget install Python.Python.3.12
+   ```
+
+2. **Install PlatformIO CLI**:
+   ```powershell
+   python -m pip install platformio
+   ```
+
+3. **Create a shortcut** (recommended):
+   ```powershell
+   # Create pio.bat in firmware folder for easier commands
+   echo @echo off > pio.bat
+   echo C:/Users/wefky/AppData/Local/Programs/Python/Python312/Scripts/pio.exe %* >> pio.bat
+   ```
+
+4. **Test installation**:
+   ```powershell
+   C:/Users/wefky/AppData/Local/Programs/Python/Python312/Scripts/pio.exe --version
+   ```
+
+### Quick Command Reference
+
+**Full path commands:**
+```powershell
+# Build and upload
+C:/Users/wefky/AppData/Local/Programs/Python/Python312/Scripts/pio.exe run -e car --target upload
+C:/Users/wefky/AppData/Local/Programs/Python/Python312/Scripts/pio.exe run -e start --target upload
+C:/Users/wefky/AppData/Local/Programs/Python/Python312/Scripts/pio.exe run -e finish --target upload
+
+# Monitor serial output
+C:/Users/wefky/AppData/Local/Programs/Python/Python312/Scripts/pio.exe device monitor -e car
+C:/Users/wefky/AppData/Local/Programs/Python/Python312/Scripts/pio.exe device monitor -e start
+C:/Users/wefky/AppData/Local/Programs/Python/Python312/Scripts/pio.exe device monitor -e finish
+
+# List available ports
+C:/Users/wefky/AppData/Local/Programs/Python/Python312/Scripts/pio.exe device list
+```
+
+**If you have pio.bat in firmware folder:**
+```powershell
+# Build and upload
+.\pio run -e car --target upload
+.\pio run -e start --target upload
+.\pio run -e finish --target upload
+
+# Monitor serial output
+.\pio device monitor -e car
+.\pio device monitor -e start
+.\pio device monitor -e finish
+
+# List available ports
+.\pio device list
+```
+
+---or quick testing or sharing (e.g. with your teacher).
 
 ---
 
@@ -121,46 +185,109 @@ Whenever you’ve made changes to a unit’s `main.cpp`, use these commands to b
 
 ## 1. CarUnit (Soft-AP + MPU-6050)
 
-```bash
-# Go to the firmware folder
+```powershell
+# Navigate to firmware folder
 cd D:/GitHub/ESP8266-MPU6050-TOF/firmware
 
-# Compile & upload to the CarUnit
-pio run -e car --target upload
+# Build and upload to CarUnit
+.\pio run -e car --target upload
+# OR use full path:
+# C:/Users/wefky/AppData/Local/Programs/Python/Python312/Scripts/pio.exe run -e car --target upload
 
-# (Optional) Open serial monitor to verify output
-pio device monitor -e car
+# Monitor serial output (Ctrl+C to exit)
+.\pio device monitor -e car
+# OR use full path:
+# C:/Users/wefky/AppData/Local/Programs/Python/Python312/Scripts/pio.exe device monitor -e car
 ```
+
+**What to expect in monitor:**
+- WiFi AP started on 192.168.4.1
+- MPU6050 initialization messages
+- Speed and acceleration readings
+- HTTP server status
 
 ---
 
 ## 2. StartUnit (STA + VL53L1X)
 
-```bash
+```powershell
 # From the same firmware folder
 cd D:/GitHub/ESP8266-MPU6050-TOF/firmware
 
-# Compile & upload to the StartUnit
-pio run -e start --target upload
+# Build and upload to StartUnit
+.\pio run -e start --target upload
+# OR use full path:
+# C:/Users/wefky/AppData/Local/Programs/Python/Python312/Scripts/pio.exe run -e start --target upload
 
-# (Optional) Monitor serial output
-pio device monitor -e start
+# Monitor serial output (Ctrl+C to exit)
+.\pio device monitor -e start
+# OR use full path:
+# C:/Users/wefky/AppData/Local/Programs/Python/Python312/Scripts/pio.exe device monitor -e start
 ```
+
+**What to expect in monitor:**
+- WiFi connection to CarUnit AP (192.168.4.1)
+- VL53L1X sensor initialization
+- Distance readings in mm
+- HTTP server responding on /status endpoint
 
 ---
 
 ## 3. FinishUnit (STA + VL53L1X + POST /finish)
 
-```bash
+```powershell
 # Still in firmware folder
 cd D:/GitHub/ESP8266-MPU6050-TOF/firmware
 
-# Compile & upload to the FinishUnit
-pio run -e finish --target upload
+# Build and upload to FinishUnit
+.\pio run -e finish --target upload
+# OR use full path:
+# C:/Users/wefky/AppData/Local/Programs/Python/Python312/Scripts/pio.exe run -e finish --target upload
 
-# (Optional) Monitor serial output
-pio device monitor -e finish
+# Monitor serial output (Ctrl+C to exit)
+.\pio device monitor -e finish
+# OR use full path:
+# C:/Users/wefky/AppData/Local/Programs/Python/Python312/Scripts/pio.exe device monitor -e finish
 ```
+
+**What to expect in monitor:**
+- WiFi connection to CarUnit AP (192.168.4.1)
+- VL53L1X sensor initialization
+- Distance readings in mm
+- HTTP server responding on /finish endpoint
+- POST requests when finish line is triggered
+
+---
+
+### Testing Your Setup
+
+1. **Check available serial ports:**
+   ```powershell
+   .\pio device list
+   ```
+
+2. **Test CarUnit first** (creates WiFi AP):
+   - Upload CarUnit firmware
+   - Monitor output until you see "AP started"
+   - Look for IP address 192.168.4.1
+
+3. **Test StartUnit/FinishUnit** (connects to CarUnit):
+   - Make sure CarUnit is running first
+   - Upload StartUnit or FinishUnit firmware
+   - Monitor output for WiFi connection success
+
+4. **Test HTTP endpoints** (use browser or curl):
+   ```
+   http://192.168.4.1/data      (CarUnit - speed/accel data)
+   http://192.168.4.2/status    (StartUnit - distance/trigger)
+   http://192.168.4.3/finish    (FinishUnit - distance/trigger)
+   ```
+
+5. **Monitor tips:**
+   - Press **Ctrl+C** to exit monitor
+   - Unplug/replug USB if upload fails
+   - Check that correct COM port is detected
+   - Only one device can use a COM port at a time
 
 ---
 
@@ -284,3 +411,24 @@ Once your ESP8266 StartUnit is at `192.168.4.2` and FinishUnit at `192.168.4.3`,
 ---
 
 Happy testing!
+
+---
+
+## Troubleshooting
+
+### IntelliSense Errors (Red Squiggles)
+
+If you see red squiggles in VS Code saying "cannot open source file" for ESP8266 libraries:
+
+1. **Reload VS Code window**: `Ctrl+Shift+P` → "Developer: Reload Window"
+2. **Check C++ configuration**: The `.vscode/c_cpp_properties.json` file should be configured for PlatformIO
+3. **Install C++ Extension**: Make sure you have the "C/C++" extension by Microsoft installed
+
+The code will still compile and upload correctly even with red squiggles - this is just an editor display issue.
+
+### Port Issues
+
+If you get "could not open port" errors:
+- Check which COM port your ESP8266 is connected to in Device Manager
+- Make sure only one device is connected at a time
+- The `platformio.ini` file now auto-detects ports, so it should work on any available port
