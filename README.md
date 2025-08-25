@@ -2,7 +2,7 @@
 
 A hardware + mobile app race timer using ESP8266, MPU6050 (car telemetry), VL53L1X ToF sensors (start/finish), and a React Native + Expo app.
 
-## 🏁 Project Overview
+## Project Overview
 
 This project consists of three main components:
 
@@ -34,7 +34,7 @@ This project consists of three main components:
                     └─────────────────┘
 ```
 
-## 🔧 Hardware requirements
+## Hardware requirements
 
 ### Electronic Components
 
@@ -65,7 +65,7 @@ GPIO5 (D1) →    SCL
 GND        →    GND
 ```
 
-## 📱 Mobile app
+## Mobile app
 
 ### Features
 
@@ -91,7 +91,7 @@ GND        →    GND
 - **React Native Chart Kit** for data visualization
 - **NetInfo** for network connectivity monitoring
 
-## 🖥️ Firmware architecture
+## Firmware architecture
 
 ### Unit Types
 
@@ -130,7 +130,7 @@ Default device IPs:
 App discovery: If 192.168.4.2/.3 are not found, the app probes a few DHCP‑style fallbacks (e.g., 192.168.4.10/20/30/40/50/60) and uses the first that answers.
 ```
 
-## 🚀 Installation & setup
+## Installation & setup
 
 ### Firmware setup
 
@@ -206,7 +206,7 @@ expo start
 - **Android**: Press `a` in terminal or scan QR code with Expo Go app
 - **Web**: Press `w` in terminal
 
-## 🎯 Usage
+##  Usage
 
 ### 1) Hardware
 1. Power on all three ESP8266 units
@@ -230,7 +230,7 @@ expo start
 3. App displays real-time speed, acceleration, distance
 4. Vehicle crosses finish line (stops timer, shows results)
 
-## 📊 API reference
+##  API reference
 
 ### Car Unit (192.168.4.1)
 
@@ -318,7 +318,7 @@ const char* SSID = "RaceTimerNet";
 IPAddress   STA_IP_FIN(192,168,4,3);
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -370,7 +370,7 @@ curl http://192.168.4.2/status
 curl http://192.168.4.3/status
 ```
 
-## 📈 Performance (indicative)
+##  Performance (indicative)
 
 ### Timing / sampling
 - **Start/Finish Detection**: <10ms response time
@@ -387,7 +387,7 @@ curl http://192.168.4.3/status
 - **MPU6050**: ~3.5mA active, ~40µA sleep
 - **VL53L1X**: ~20mA active measurement
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions are welcome! Please follow these steps:
 
@@ -403,18 +403,18 @@ Contributions are welcome! Please follow these steps:
 - Test thoroughly on hardware before submitting
 - Update documentation for new features
 
-## 📄 License
+##  License
 
 This project is licensed under the 0BSD License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - [I2Cdevlib](https://github.com/jrowberg/i2cdevlib) for MPU6050 library
 - [Adafruit](https://github.com/adafruit) for VL53L1X library  
 - [PlatformIO](https://platformio.org/) for embedded development platform
 - [Expo](https://expo.dev/) for React Native development tools
 
-## 📞 Support
+##  Support
 
 Open an issue or PR if something doesn’t work or could be improved.
 
