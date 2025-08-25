@@ -1,10 +1,10 @@
-// app/screens/ReadyScreen.js
 // screens/ReadyScreen.js
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import StepperHeader from '../components/StepperHeader';
 import { getStart, startDemoRun } from '../api';
 import { useLap } from '../context/LapContext';
+import { READY_THRESHOLD_MM } from '../config';
 
 export default function ReadyScreen({ navigation }) {
   const { setStartTime } = useLap();
@@ -19,12 +19,16 @@ export default function ReadyScreen({ navigation }) {
 
     async function tick() {
       try {
-        const { data } = await getStart();
+  const { data } = await getStart();
         if (!mounted) return;
 
-        setDistanceMm(Number(data?.distanceMm ?? data?.distance ?? 0));
-        const isReady = !!data?.ready;
-        setReady(isReady);
+  // Use either distanceMm or distance from firmware
+  const mm = Number(data?.distanceMm ?? data?.distance ?? NaN);
+  setDistanceMm(Number.isFinite(mm) ? mm : null);
+
+  // Compute ready locally from mm
+  const isReady = Number.isFinite(mm) && mm > 0 && mm <= READY_THRESHOLD_MM;
+  setReady(isReady);
 
         const now = Date.now();
         if (isReady) {
@@ -66,22 +70,16 @@ export default function ReadyScreen({ navigation }) {
       <StepperHeader stepIndex={3} />
       <View style={{ padding: 20, gap: 16 }}>
         <Text style={{ fontSize: 24, fontWeight: '800' }}>Get ready</Text>
-        <Text style={{ color: '#666' }}>Move the car to the start zone until it’s detected.</Text>
+        <Text style={{ color: '#666' }}>
+          Move the car to the start zone (≤ {READY_THRESHOLD_MM} mm) until it’s detected.
+        </Text>
 
         <View style={{
           borderWidth: 1, borderColor: ready ? '#1a7f37' : '#eee',
           borderRadius: 16, padding: 16, gap: 8
         }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ color: '#666' }}>Distance to start</Text>
-            <Text style={{ fontWeight: '700' }}>{nearText}</Text>
-          </View>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ color: '#666' }}>Ready</Text>
-            <Text style={{ fontWeight: '800', color: ready ? '#1a7f37' : '#c00' }}>
-              {ready ? 'YES' : 'NO'}
-            </Text>
-          </View>
+          <Row label="Distance to start" value={nearText} />
+          <Row label="Ready" value={ready ? 'YES' : 'NO'} valueStyle={{ color: ready ? '#1a7f37' : '#c00', fontWeight: '800' }} />
         </View>
 
         <Pressable
@@ -99,9 +97,18 @@ export default function ReadyScreen({ navigation }) {
         </Pressable>
 
         <Text style={{ color: '#999', fontSize: 12 }}>
-          Tip: This advances automatically once “Ready” stays true for ~0.6s.
+          Tip: It auto-starts after “Ready” is true for ~0.6 s.
         </Text>
       </View>
+    </View>
+  );
+}
+
+function Row({ label, value, valueStyle }) {
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+      <Text style={{ color: '#666' }}>{label}</Text>
+      <Text style={[{ fontWeight: '800' }, valueStyle]}>{value}</Text>
     </View>
   );
 }

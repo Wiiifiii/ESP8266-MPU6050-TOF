@@ -3,9 +3,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import StepperHeader from '../components/StepperHeader';
 import { getStart } from '../api';
+import { NEAR_THRESHOLD_MM } from '../config';
 import { useLap } from '../context/LapContext';
 
-const READY_NEAR_MM = 120; // show "Continue" when within ~12 cm of start
+const READY_NEAR_MM = NEAR_THRESHOLD_MM; // show "Continue" when within threshold
 
 export default function DriveToStartScreen({ navigation }) {
   const { trackDistance } = useLap();
