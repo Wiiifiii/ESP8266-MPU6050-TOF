@@ -1,25 +1,25 @@
-# ESP8266-MPU6050-TOF Race Timer System
+# ESP8266‑MPU6050‑TOF Race Timer System
 
-A comprehensive race timing system built with ESP8266 microcontrollers, MPU6050 accelerometer/gyroscope sensors, VL53L1X time-of-flight sensors, and a React Native mobile application. This system provides accurate timing, speed tracking, and distance measurement for racing applications.
+A hardware + mobile app race timer using ESP8266, MPU6050 (car telemetry), VL53L1X ToF sensors (start/finish), and a React Native + Expo app.
 
 ## 🏁 Project Overview
 
 This project consists of three main components:
 
-1. **Firmware** - ESP8266-based units for race timing and car telemetry
-2. **Mobile App** - React Native/Expo app for race monitoring and control
-3. **Hardware Integration** - MPU6050 and VL53L1X sensor integration
+1. Firmware — three ESP8266 units (Car = AP + IMU, Start = ToF, Finish = ToF)
+2. Mobile App — React Native/Expo controller + live telemetry
+3. Hardware — simple I2C wiring: MPU6050 on Car; VL53L1X on Start/Finish
 
 ### System Architecture
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Start Unit    │    │    Car Unit     │    │  Finish Unit    │
+│    Car Unit     │    │   Start Unit    │    │  Finish Unit    │
 │   (ESP8266)     │    │   (ESP8266)     │    │   (ESP8266)     │
 │                 │    │                 │    │                 │
-│ • VL53L1X TOF   │    │ • MPU6050       │    │ • VL53L1X TOF   │
-│ • WiFi AP       │    │ • WiFi Client   │    │ • WiFi Client   │
-│ • Start Detect  │    │ • Accelerometer │    │ • Finish Detect │
+│ • MPU6050 (IMU) │    │ • VL53L1X ToF   │    │ • VL53L1X ToF   │
+│ • Wi‑Fi AP      │    │ • Wi‑Fi Station │    │ • Wi‑Fi Station │
+│ • Telemetry     │    │ • Start Detect  │    │ • Finish Detect │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          └───────────────────────┼───────────────────────┘
@@ -34,7 +34,7 @@ This project consists of three main components:
                     └─────────────────┘
 ```
 
-## 🔧 Hardware Requirements
+## 🔧 Hardware requirements
 
 ### Electronic Components
 
@@ -65,22 +65,23 @@ GPIO5 (D1) →    SCL
 GND        →    GND
 ```
 
-## 📱 Mobile Application
+## 📱 Mobile app
 
 ### Features
 
-- **Real-time Race Monitoring** - Live telemetry from car unit
-- **Multi-screen Interface** - Step-by-step race flow
-- **WiFi Integration** - Connects to ESP8266 race network
-- **Data Visualization** - Charts and progress indicators
+- Live telemetry (speed/accel/distance)
+- Stepper flow: Distance → Connect → Drive → Ready → Running → Finished
+- Automatic discovery of Start/Finish IPs on the race AP
+- History of last 10 laps (best-first display)
 
 ### Screen Flow
 
-1. **Distance Screen** - Initial connection and distance measurement
-2. **Drive to Start** - Positioning guidance
-3. **Ready Screen** - Pre-race preparation
-4. **Running Screen** - Live race data with speed/acceleration
-5. **Finished Screen** - Race results and statistics
+1) Distance — set track distance (m)
+2) Connect — ensure Car+Start reachable (Finish optional)
+3) Drive to Start — approach until near threshold (mm)
+4) Ready — manual start by button (or optional auto)
+5) Running — live telemetry; finish auto-detected
+6) Finished — summary + best/last 10 laps
 
 ### Technology Stack
 
@@ -90,46 +91,48 @@ GND        →    GND
 - **React Native Chart Kit** for data visualization
 - **NetInfo** for network connectivity monitoring
 
-## 🖥️ Firmware Architecture
+## 🖥️ Firmware architecture
 
 ### Unit Types
 
-#### 1. Car Unit
+#### 1) Car Unit (AP)
 - **Purpose**: Mounted on racing vehicle for telemetry
 - **Sensors**: MPU6050 (accelerometer/gyroscope)
-- **Network**: WiFi client connecting to start unit
+- **Network**: Soft‑AP “RaceTimerNet” at 192.168.4.1
 - **Data**: Real-time acceleration, speed, distance calculation
 - **API Endpoint**: `http://192.168.4.1/data`
 
-#### 2. Start Unit
+#### 2) Start Unit (STA)
 - **Purpose**: Race start line detection and WiFi access point
 - **Sensors**: VL53L1X time-of-flight sensor
-- **Network**: WiFi access point ("RaceTimerNet")
+- **Network**: Wi‑Fi station joining Car AP at 192.168.4.2
 - **Function**: Detects vehicle presence and triggers race start
 - **API Endpoint**: `http://192.168.4.2/status`
 
-#### 3. Finish Unit
+#### 3) Finish Unit (STA)
 - **Purpose**: Race finish line detection
 - **Sensors**: VL53L1X time-of-flight sensor
-- **Network**: WiFi client connecting to start unit
+- **Network**: Wi‑Fi station joining Car AP at 192.168.4.3
 - **Function**: Detects vehicle crossing finish line
 - **API Endpoint**: `http://192.168.4.3/status`
 
-### Network Configuration
+### Network configuration
 
 ```
-Access Point: RaceTimerNet
-IP Range: 192.168.4.0/24
+Access Point: Car Unit “RaceTimerNet”
+Subnet: 192.168.4.0/24
 
-Device IPs:
-├── Start Unit (AP):  192.168.4.1
-├── Car Unit:         192.168.4.2 (dynamic)
-└── Finish Unit:      192.168.4.3
+Default device IPs:
+├─ Car Unit (AP):   192.168.4.1  → GET /data
+├─ Start Unit:      192.168.4.2  → GET /status
+└─ Finish Unit:     192.168.4.3  → GET /status
+
+App discovery: If 192.168.4.2/.3 are not found, the app probes a few DHCP‑style fallbacks (e.g., 192.168.4.10/20/30/40/50/60) and uses the first that answers.
 ```
 
-## 🚀 Installation & Setup
+## 🚀 Installation & setup
 
-### Firmware Setup
+### Firmware setup
 
 #### Prerequisites
 - [PlatformIO IDE](https://platformio.org/) or PlatformIO CLI
@@ -148,7 +151,7 @@ The project includes three build environments in `platformio.ini`:
 - `start` - Start unit with VL53L1X  
 - `finish` - Finish unit with VL53L1X
 
-#### 3. Flash Firmware
+#### 3) Flash firmware
 
 **Option A: PlatformIO IDE**
 1. Open firmware folder in PlatformIO
@@ -167,24 +170,18 @@ pio run -e start --target upload
 pio run -e finish --target upload
 ```
 
-#### 4. Update COM Ports
-Edit `platformio.ini` and update upload ports:
+#### 4) COM ports (optional)
+By default, Car’s `upload_port` is set; Start/Finish auto-detect. Edit `firmware/platformio.ini` if needed:
 ```ini
 [env:car]
-upload_port = COM3    # Update to your port
-
-[env:start]  
-upload_port = COM4    # Update to your port
-
-[env:finish]
-upload_port = COM5    # Update to your port
+upload_port = COM4  ; set to your COM port or remove to auto-detect
 ```
 
-### Mobile App Setup
+### Mobile app setup
 
 #### Prerequisites
-- [Node.js](https://nodejs.org/) (v16 or later)
-- [Expo CLI](https://docs.expo.dev/get-started/installation/)
+- Node.js 18+ LTS recommended
+- Expo (local dev server)
 - iOS Simulator or Android Emulator (optional)
 
 #### 1. Navigate to App Directory
@@ -192,100 +189,112 @@ upload_port = COM5    # Update to your port
 cd ESP8266-MPU6050-TOF/app
 ```
 
-#### 2. Install Dependencies
+#### 2) Install dependencies
 ```bash
 npm install
 ```
 
-#### 3. Start Development Server
+#### 3) Start dev server
 ```bash
 npm start
 # or
 expo start
 ```
 
-#### 4. Run on Device/Simulator
+#### 4) Run on device/simulator
 - **iOS**: Press `i` in terminal or scan QR code with Camera app
 - **Android**: Press `a` in terminal or scan QR code with Expo Go app
 - **Web**: Press `w` in terminal
 
-## 🎯 Usage Instructions
+## 🎯 Usage
 
-### 1. Hardware Setup
+### 1) Hardware
 1. Power on all three ESP8266 units
 2. Wait for Start Unit to create "RaceTimerNet" WiFi network
 3. Verify Car Unit and Finish Unit connect to network
 4. Position sensors at start/finish lines and mount car unit on vehicle
 
-### 2. Mobile App Operation
+### 2) App flow
 1. Connect phone to "RaceTimerNet" WiFi network
 2. Launch mobile app
 3. Follow on-screen instructions through race sequence:
-   - **Distance**: Verify connectivity and distance readings
+  - **Distance**: Set track distance (meters)
    - **Drive to Start**: Position vehicle at start line
    - **Ready**: Confirm race readiness  
    - **Running**: Monitor live telemetry during race
    - **Finished**: View race results
 
-### 3. Race Flow
+### 3) Race flow
 1. Vehicle approaches start line (triggers ready state)
 2. Vehicle crosses start line (triggers race start timer)
 3. App displays real-time speed, acceleration, distance
 4. Vehicle crosses finish line (stops timer, shows results)
 
-## 📊 API Reference
+## 📊 API reference
 
-### Car Unit API (`192.168.4.1`)
+### Car Unit (192.168.4.1)
 
 #### GET `/data`
-Returns real-time telemetry data.
+Returns real‑time telemetry from the IMU + integration.
 
 **Response:**
 ```json
 {
-  "ax": 0.123,      // X-axis acceleration (m/s²)
-  "ay": -0.045,     // Y-axis acceleration (m/s²) 
-  "az": 9.789,      // Z-axis acceleration (m/s²)
-  "speed": 15.67,   // Current speed (m/s)
-  "distance": 123.45 // Total distance (m)
+  "ax": 0.123,      // X acceleration in g (app can scale to m/s²)
+  "ay": -0.045,     // Y acceleration in g
+  "az": 0.998,      // Z acceleration in g (gravity mostly here)
+  "speed": 3.25,    // Current speed (m/s)
+  "distance": 12.34 // Integrated distance (m)
 }
 ```
 
-### Start Unit API (`192.168.4.2`)
+### Start Unit (192.168.4.2)
 
 #### GET `/status`
-Returns start line sensor status.
+Returns start line status from VL53L1X.
 
 **Response:**
 ```json
 {
-  "distance": 0.045,    // Distance to object (m)
-  "ready": true,        // Ready state (≤50mm)
-  "triggered": false,   // Start triggered (≤2mm)
-  "startTime": 0        // Start timestamp (ms)
+  "distanceMm": 35,     // Distance to object (mm, median‑filtered)
+  "ready": true,        // Ready (≤ ~50 mm)
+  "triggered": false,   // Start edge seen (≤ ~2 mm)
+  "startMs": 1234567,   // Optional when triggered
+  "elapsedMs": 420      // Optional when triggered
 }
 ```
 
-### Finish Unit API (`192.168.4.3`)
+### Finish Unit (192.168.4.3)
 
 #### GET `/status`  
-Returns finish line sensor status.
+Returns finish line status from VL53L1X.
 
 **Response:**
 ```json
 {
   "distance": 0.123,    // Distance to object (m)
-  "finished": false     // Finish triggered (≤50mm)
+  "finished": false     // Finish triggered (≤ ~50 mm)
 }
 ```
 
-## 🔧 Configuration
+## 🔧 Configuration (app)
 
-### Sensor Calibration
+Key flags in `app/config.js`:
+
+- `USE_DEMO = false` — real hardware mode (demo available via `api.demo`)
+- `NEAR_THRESHOLD_MM = 120` — “near” distance to enable Continue on Drive screen
+- `READY_THRESHOLD_MM = 60` — “ready” distance for the Ready screen
+- `SHOW_DEBUG = false` — show/hide extra raw debug values/buttons
+- `ACCEL_UNITS = 'g'` — firmware sends ax/ay/az in g; app scales if needed
+- `AUTO_START_ON_READY = false` — set true to auto‑start after stable ready
+
+History keeps last 10 laps and displays best first on Finished screen.
+
+## 🔧 Configuration (firmware)
 
 #### MPU6050 (Car Unit)
 - Automatic bias calibration on startup
-- 1000 sample averaging for offset correction
+- ~500 samples for offset correction
 - Configurable in `CarUnit/main.cpp`
 
 #### VL53L1X (Start/Finish Units)
@@ -294,40 +303,50 @@ Returns finish line sensor status.
   - Trigger: ≤2mm (start), ≤50mm (finish)
 - Median filtering for noise reduction
 
-### Network Settings
+### Network settings
 WiFi credentials and IP addresses can be modified in respective unit source files:
 ```cpp
+// CarUnit (AP)
+const char* AP_SSID = "RaceTimerNet";    // 192.168.4.1
+
+// StartUnit (STA)
+const char* SSID = "RaceTimerNet";       // joins AP
+IPAddress   STA_IP(192,168,4,2);
+
+// FinishUnit (STA)
 const char* SSID = "RaceTimerNet";
-IPAddress STA_IP(192,168,4,2);  // Update as needed
+IPAddress   STA_IP_FIN(192,168,4,3);
 ```
 
 ## 🐛 Troubleshooting
 
 ### Common Issues
 
-#### 1. WiFi Connection Problems
+#### 1) Wi‑Fi / connectivity
 - Verify "RaceTimerNet" network is active
-- Check ESP8266 power and reset units if needed
-- Ensure mobile device is connected to correct network
+- Car must be powered (it hosts the AP at 192.168.4.1)
+- Ensure your phone is connected to RaceTimerNet and mobile data is off
+- Start/Finish join automatically; the app can also discover alternate IPs
 
-#### 2. Sensor Reading Issues
+#### 2) Sensors
 - Verify I2C wiring (SDA/SCL connections)
 - Check 3.3V power supply stability  
 - Monitor serial output for sensor initialization errors
 
-#### 3. Mobile App Connection
+#### 3) Mobile app
 - Confirm app and ESP8266s are on same network
 - Check firewall settings on mobile device
-- Verify API endpoints are responding (test with browser)
+- Test endpoints in a browser (http://192.168.4.1/data, 4.2/status, 4.3/status)
+  - iOS: cleartext HTTP is allowed via Info.plist (ATS); Android: usesCleartextTraffic=true
 
-#### 4. Inaccurate Measurements
+#### 4) Inaccurate measurements
 - Recalibrate MPU6050 (restart car unit)
 - Clean VL53L1X sensor windows
 - Verify sensor mounting and positioning
 
 ### Debug Commands
 
-#### Check Serial Output
+#### Check serial output
 ```bash
 # Monitor car unit
 pio device monitor -e car
@@ -339,7 +358,7 @@ pio device monitor -e start
 pio device monitor -e finish
 ```
 
-#### Test API Endpoints
+#### Test API endpoints
 ```bash
 # Test car unit (replace with actual IP)
 curl http://192.168.4.1/data
@@ -351,19 +370,19 @@ curl http://192.168.4.2/status
 curl http://192.168.4.3/status
 ```
 
-## 📈 Performance Specifications
+## 📈 Performance (indicative)
 
-### Timing Accuracy
+### Timing / sampling
 - **Start/Finish Detection**: <10ms response time
 - **Distance Measurement**: ±3mm accuracy (VL53L1X)
-- **Speed Calculation**: Real-time with 100Hz sampling
+- **IMU loop**: ~100 Hz (integration on device)
 
-### Range Specifications
+### Ranges
 - **VL53L1X Range**: 4cm to 4m
 - **MPU6050 Acceleration**: ±2g to ±16g (configurable)
 - **WiFi Range**: ~30m line-of-sight
 
-### Power Consumption
+### Power
 - **ESP8266**: ~80mA active, ~20µA deep sleep
 - **MPU6050**: ~3.5mA active, ~40µA sleep
 - **VL53L1X**: ~20mA active measurement
@@ -397,7 +416,7 @@ This project is licensed under the 0BSD License - see the [LICENSE](LICENSE) fil
 
 ## 📞 Support
 
-For questions, issues, or contributions:
+Open an issue or PR if something doesn’t work or could be improved.
 
 - **GitHub Issues**: [Report bugs or request features](https://github.com/Wiiifiii/ESP8266-MPU6050-TOF/issues)
 - **Documentation**: Check this README and inline code comments
@@ -405,4 +424,3 @@ For questions, issues, or contributions:
 
 ---
 
-**Built with ❤️ for the racing community**
