@@ -1,7 +1,10 @@
 // app/api.js
-import axios from 'axios';
+// app/api.js - switcher between demo and real implementations
+import * as demo from './api.demo';
+import * as real from './api.real';
+import { USE_DEMO } from './config';
 
-export default axios.create({
-  baseURL: 'http://192.168.4.1',  // ESP8266 default AP address
-  timeout: 5000,                  // optional: 5s timeout
-});
+const api = USE_DEMO ? demo : real;
+
+export const { getCar, getStart, getFinish, startDemoRun = () => {} } = api;
+export default api;

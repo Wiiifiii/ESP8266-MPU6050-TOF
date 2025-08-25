@@ -1,37 +1,50 @@
-import React, { createContext, useState } from 'react';
+// context/LapContext.js
+import React, { createContext, useContext, useMemo, useState } from 'react';
 
-export const LapContext = createContext();
+const LapContext = createContext(null);
 
 export function LapProvider({ children }) {
-  const [trackDistance,    setTrackDistance]    = useState(0);
-  const [startTime,        setStartTime]        = useState(null);
-  const [finishTime,       setFinishTime]       = useState(null);
-  const [readings,         setReadings]         = useState([]);
-  const [traveledDistance, setTraveledDistance] = useState(0);
-  const [speed,            setSpeed]            = useState(0);
-  const [accel,            setAccel]            = useState(0);
-  const [lapHistory,       setLapHistory]       = useState([]);
+  // Track configuration
+  const [trackDistance, setTrackDistance] = useState(60); // meters
 
-  const resetSession = () => {
+  // One-lap runtime state
+  const [startTime, setStartTime] = useState(null); // ms epoch
+  const [endTime, setEndTime] = useState(null);     // ms epoch
+  const [readings, setReadings] = useState([]);     // [{t,speed,ax,ay,az,distance}]
+
+  // Computed/summary + history
+  const [lastSummary, setLastSummary] = useState(null);
+  const [lapHistory, setLapHistory] = useState([]); // newest first, keep 10
+
+  function resetLap() {
     setStartTime(null);
-    setFinishTime(null);
-    setTraveledDistance(0);
+    setEndTime(null);
     setReadings([]);
-  };
+    setLastSummary(null);
+  }
 
-  return (
-    <LapContext.Provider value={{
-      trackDistance, setTrackDistance,
-      startTime,     setStartTime,
-      finishTime,    setFinishTime,
-      readings,      setReadings,
-      traveledDistance, setTraveledDistance,
-      speed,         setSpeed,
-      accel,         setAccel,
-      lapHistory,    setLapHistory,
-      resetSession,
-    }}>
-      {children}
-    </LapContext.Provider>
-  );
+  const value = useMemo(() => ({
+    // config
+    trackDistance, setTrackDistance,
+
+    // runtime
+    startTime, setStartTime,
+    endTime, setEndTime,
+    readings, setReadings,
+
+    // summaries
+    lastSummary, setLastSummary,
+    lapHistory, setLapHistory,
+
+    // helpers
+    resetLap,
+  }), [trackDistance, startTime, endTime, readings, lastSummary, lapHistory]);
+
+  return <LapContext.Provider value={value}>{children}</LapContext.Provider>;
+}
+
+export function useLap() {
+  const ctx = useContext(LapContext);
+  if (!ctx) throw new Error('useLap must be used inside LapProvider');
+  return ctx;
 }

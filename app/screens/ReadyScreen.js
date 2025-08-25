@@ -1,13 +1,16 @@
 // app/screens/ReadyScreen.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import StepperHeader from '../components/StepperHeader';
-import api from '../api'; // <-- axios instance
+import { LapContext, useLap } from '../context/LapContext';
+import { getStart, startDemoRun } from '../api';
 
 export default function ReadyScreen({ navigation }) {
   const [wifiOK, setWifiOK] = useState(false);
   const [ready,  setReady]  = useState(false);
+  const { setStartTime } = useContext(LapContext);
+  const { trackDistance } = useLap();
 
   // Wi-Fi watcher
   useEffect(() => {
@@ -22,11 +25,10 @@ export default function ReadyScreen({ navigation }) {
     if (!wifiOK) return;
     const iv = setInterval(async () => {
       try {
-        const res = await api.get('/status');
-        console.log('[Ready] status:', res.status);
-        setReady(res.data.ready);
+        const res = await getStart();
+        setReady(!!res.data?.ready);
       } catch (e) {
-        console.log('[Ready] error:', e.message);
+        // ignore transient errors
       }
     }, 500);
     return () => clearInterval(iv);
@@ -34,7 +36,7 @@ export default function ReadyScreen({ navigation }) {
 
   return (
     <View style={styles.screen}>
-      <StepperHeader currentStep={4} totalSteps={6} />
+  <StepperHeader stepIndex={3} />
       <Text style={styles.header}>Ready to Start</Text>
       <Text style={styles.instruction}>Waiting for GO signal…</Text>
       <Text style={styles.statusLine}>
@@ -44,7 +46,7 @@ export default function ReadyScreen({ navigation }) {
         <Button
           title="Start Run"
           disabled={!ready}
-          onPress={() => navigation.navigate('Running')}
+          onPress={() => { setStartTime(Date.now()); startDemoRun && startDemoRun(); navigation.navigate('Running'); }}
           color={ready ? '#7055e1' : '#999'}
         />
       </View>

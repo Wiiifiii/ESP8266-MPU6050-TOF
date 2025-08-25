@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import StepperHeader from '../components/StepperHeader';
-import api from '../api'; // <-- use centralized axios instance
+import { getCar } from '../api';
 
 export default function DriveToStartScreen({ navigation }) {
   const [wifiOK, setWifiOK]     = useState(false);
@@ -25,11 +25,9 @@ export default function DriveToStartScreen({ navigation }) {
     }
     const iv = setInterval(async () => {
       try {
-        const res = await api.get('/data');
-        console.log('[DriveToStart] status:', res.status);
-        setDistance(res.data.distance);
+        const res = await getCar();
+        setDistance(res.data?.distance ?? null);
       } catch (e) {
-        console.log('[DriveToStart] error:', e.message);
         setDistance(null);
       }
     }, 2000);
@@ -41,7 +39,7 @@ export default function DriveToStartScreen({ navigation }) {
 
   return (
     <View style={styles.screen}>
-      <StepperHeader currentStep={2} totalSteps={6} />
+  <StepperHeader stepIndex={2} />
       <Text style={styles.header}>Drive to Start Line</Text>
       <Text style={styles.instruction}>
         Drive until your CarUnit is within 1 m of the start sensor.
@@ -58,7 +56,7 @@ export default function DriveToStartScreen({ navigation }) {
         <Button
           title="Next"
           disabled={!atStart}
-          onPress={() => navigation.navigate('Distance')}
+          onPress={() => navigation.navigate('Ready')}
           color={atStart ? '#7055e1' : '#999'}
         />
       </View>

@@ -1,90 +1,60 @@
 // screens/DistanceScreen.js
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  SafeAreaView,
-  Platform,
-  StatusBar,
-} from 'react-native';
-import NetInfo from '@react-native-community/netinfo';
+import React, { useState } from 'react';
+import { View, Text, TextInput, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
+import { useLap } from '../context/LapContext';
 import StepperHeader from '../components/StepperHeader';
-import api from '../api';
 
-export default function DistanceScreen() {
-  const [wifiOK,    setWifiOK]    = useState(false);
-  const [distance,  setDistance]  = useState(0);
+export default function DistanceScreen({ navigation }) {
+  const { trackDistance, setTrackDistance, resetLap } = useLap();
+  const [val, setVal] = useState(String(trackDistance ?? 60));
 
-  // 1) Watch for Wi-Fi connectivity
-  useEffect(() => {
-    const unsub = NetInfo.addEventListener(state => {
-      setWifiOK(state.isConnected && state.type === 'wifi');
-    });
-    return () => unsub();
-  }, []);
-
-  // 2) Poll every second for distance
-  useEffect(() => {
-    if (!wifiOK) return;
-    const iv = setInterval(async () => {
-      try {
-        const res = await api.get('/data');
-        setDistance(res.data.distance);
-      } catch (e) {
-        console.log('[Distance] network error:', e.message);
-      }
-    }, 1000);
-    return () => clearInterval(iv);
-  }, [wifiOK]);
+  const parsed = Number(val.replace(',', '.'));
+  const isValid = Number.isFinite(parsed) && parsed > 0 && parsed <= 1000; // 1m..1000m
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.screen}>
-        <StepperHeader stepIndex={0} totalSteps={6} />
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+      <StepperHeader stepIndex={0} />
+      <View style={{ padding: 20, gap: 16 }}>
+        <Text style={{ fontSize: 24, fontWeight: '700' }}>Track Distance</Text>
+        <Text style={{ color: '#666' }}>Enter the distance between Start and Finish (meters).</Text>
 
-        <Text style={styles.header}>Distance to Start</Text>
-        <Text style={styles.distance}>
-          {distance.toFixed(1)} m
-        </Text>
-        <Text style={styles.footerNote}>
-          {wifiOK ? '✔️ Connected' : '⭘ Wi-Fi lost'}
-        </Text>
+        <View style={{
+          borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 14,
+          flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'
+        }}>
+          <TextInput
+            value={val}
+            onChangeText={setVal}
+            keyboardType="decimal-pad"
+            placeholder="60"
+            style={{ fontSize: 22, flex: 1 }}
+            returnKeyType="done"
+          />
+          <Text style={{ fontSize: 18, color: '#999', marginLeft: 8 }}>m</Text>
+        </View>
+
+        {!isValid && (
+          <Text style={{ color: '#c00' }}>Enter a value between 1 and 1000 meters.</Text>
+        )}
+
+        <Pressable
+          onPress={() => {
+            setTrackDistance(parsed);
+            resetLap(); // fresh start
+            navigation.navigate('Connect');
+          }}
+          disabled={!isValid}
+          style={({ pressed }) => ({
+            backgroundColor: isValid ? '#6c47ff' : '#ccc',
+            opacity: pressed ? 0.8 : 1,
+            paddingVertical: 14,
+            borderRadius: 12,
+            alignItems: 'center'
+          })}
+        >
+          <Text style={{ color: 'white', fontSize: 18, fontWeight: '700' }}>Next</Text>
+        </Pressable>
       </View>
-    </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f7f7f7',
-    paddingTop:
-      Platform.OS === 'android'
-        ? StatusBar.currentHeight
-        : 0,
-  },
-  screen: {
-    flex: 1,
-    backgroundColor: '#f7f7f7',
-    padding: 20,
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#2b2a33',
-  },
-  distance: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#7055e1',
-  },
-  footerNote: {
-    fontSize: 14,
-    marginTop: 20,
-    textAlign: 'center',
-    color: '#999',
-  },
-});
