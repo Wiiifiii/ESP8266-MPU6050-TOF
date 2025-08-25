@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import StepperHeader from '../components/StepperHeader';
 import { getStart } from '../api';
-import { NEAR_THRESHOLD_MM } from '../config';
+import { NEAR_THRESHOLD_MM, SHOW_DEBUG } from '../config';
 import { useLap } from '../context/LapContext';
 
 const READY_NEAR_MM = NEAR_THRESHOLD_MM; // show "Continue" when within threshold
@@ -65,6 +65,11 @@ export default function DriveToStartScreen({ navigation }) {
           <Text style={{ color: '#999', fontSize: 12 }}>
             Hint: The button enables at ≤ {READY_NEAR_MM} mm. Next screen will arm the start and auto-begin when fully ready.
           </Text>
+          {SHOW_DEBUG && (
+            <Text style={{ color:'#999', fontSize:12, marginTop:6 }}>
+              Raw: {Number.isFinite(mm) ? mm : '—'} mm
+            </Text>
+          )}
         </View>
 
         <Pressable

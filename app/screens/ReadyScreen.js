@@ -4,7 +4,7 @@ import { View, Text, Pressable } from 'react-native';
 import StepperHeader from '../components/StepperHeader';
 import { getStart, startDemoRun } from '../api';
 import { useLap } from '../context/LapContext';
-import { READY_THRESHOLD_MM } from '../config';
+import { READY_THRESHOLD_MM, SHOW_DEBUG } from '../config';
 
 export default function ReadyScreen({ navigation }) {
   const { setStartTime } = useLap();
@@ -70,9 +70,7 @@ export default function ReadyScreen({ navigation }) {
       <StepperHeader stepIndex={3} />
       <View style={{ padding: 20, gap: 16 }}>
         <Text style={{ fontSize: 24, fontWeight: '800' }}>Get ready</Text>
-        <Text style={{ color: '#666' }}>
-          Move the car to the start zone (≤ {READY_THRESHOLD_MM} mm) until it’s detected.
-        </Text>
+  <Text style={{ color: '#666' }}>Move car within ≤ {READY_THRESHOLD_MM} mm.</Text>
 
         <View style={{
           borderWidth: 1, borderColor: ready ? '#1a7f37' : '#eee',
@@ -80,6 +78,7 @@ export default function ReadyScreen({ navigation }) {
         }}>
           <Row label="Distance to start" value={nearText} />
           <Row label="Ready" value={ready ? 'YES' : 'NO'} valueStyle={{ color: ready ? '#1a7f37' : '#c00', fontWeight: '800' }} />
+          {SHOW_DEBUG && <Text style={{ color:'#999', fontSize:12 }}>Raw: {distanceMm == null ? '—' : `${distanceMm} mm`}</Text>}
         </View>
 
         <Pressable

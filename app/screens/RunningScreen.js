@@ -1,133 +1,126 @@
-// app/screens/RunningScreen.js
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import StepperHeader from '../components/StepperHeader';
 import { getCar, getFinish } from '../api';
 import { useLap } from '../context/LapContext';
 import { computeMetrics } from '../utils/metrics';
+import { ACCEL_SCALE, SHOW_DEBUG } from '../config';
 
 export default function RunningScreen({ navigation }) {
   const {
-    trackDistance,
-    startTime, setStartTime,
+    trackDistance, startTime, setStartTime,
     endTime, setEndTime,
     readings, setReadings,
     setLastSummary, setLapHistory,
   } = useLap();
 
-  const [tick, setTick] = useState(0); // repaint timer
+  const [live, setLive] = useState({ speed: 0, accel: 0, distance: 0 });
   const timerRef = useRef(null);
+  const prevRef = useRef(null);
 
   useEffect(() => {
-    // ensure start time exists (demo/real)
     if (!startTime) setStartTime(Date.now());
+    let mounted = true;
 
-    let isMounted = true;
     const loop = async () => {
       try {
-        const [{ data: car }, { data: fin }] = await Promise.all([getCar(), getFinish()]);
-        if (!isMounted) return;
+        const [{ data: car }, { data: fin }] = await Promise.all([
+          getCar().catch(() => ({ data: {} })),
+          getFinish().catch(() => ({ data: {} })),
+        ]);
+        if (!mounted) return;
 
-        setReadings(prev => {
-          const item = { t: Date.now(), ...car }; // expects {speed, ax, ay, az, distance}
-          const next = [...prev, item];
-          // keep last 2000 samples max
+        const now = Date.now();
+        const ax = Number(car.ax); const ay = Number(car.ay);
+        let accelMag = (Number.isFinite(ax) && Number.isFinite(ay)) ? Math.hypot(ax, ay) * ACCEL_SCALE : NaN;
+
+        const dist = Number(car.distance);
+        let spd = Number(car.speed);
+
+        // Fallbacks:
+        const prev = prevRef.current;
+        if ((!Number.isFinite(spd) || spd < 0) && Number.isFinite(dist) && prev && Number.isFinite(prev.distance)) {
+          const dt = (now - prev.t) / 1000;
+          if (dt > 0.02) spd = Math.max(0, (dist - prev.distance) / dt); // m/s
+        }
+        if ((!Number.isFinite(accelMag) || accelMag < 0) && prev && Number.isFinite(spd) && Number.isFinite(prev.speed)) {
+          const dt = (now - prev.t) / 1000;
+          if (dt > 0.02) accelMag = (spd - prev.speed) / dt;             // m/s^2
+        }
+
+        prevRef.current = { t: now, speed: spd, distance: dist };
+
+        setLive({
+          speed: Number.isFinite(spd) ? spd : 0,
+          accel: Number.isFinite(accelMag) ? accelMag : 0,
+          distance: Number.isFinite(dist) ? dist : 0,
+        });
+
+        setReadings(prevArr => {
+          const item = { t: now, ...car, speed: spd, accel: accelMag, distance: dist };
+          const next = [...prevArr, item];
           return next.length > 2000 ? next.slice(-2000) : next;
         });
 
-        if (fin?.finished) {
+        if (fin && (fin.finished === true || fin.finished === 1)) {
           const ended = Date.now();
           setEndTime(ended);
-
           const summary = computeMetrics({
-            readings,
+            readings: [...(readings || []), { t: now, ...car, speed: spd, accel: accelMag, distance: dist }],
             trackDistance: Number(trackDistance) || 0,
-            startTime: startTime || Date.now(),
+            startTime: startTime || now,
             endTime: ended,
           });
           setLastSummary(summary);
           setLapHistory(prev => [summary, ...(prev || [])].slice(0, 10));
-
           navigation.replace('Finished');
-          return; // stop loop
+          return;
         }
-      } catch (e) {
-        // ignore transient errors during run; UI will keep ticking
       } finally {
-        // schedule next tick
-        if (isMounted) timerRef.current = setTimeout(loop, 150);
+        timerRef.current = setTimeout(loop, 120);
       }
     };
 
-    timerRef.current = setTimeout(loop, 150);
-
-    // paint timer
-    const paint = setInterval(() => setTick(x => x + 1), 80);
-
-    return () => {
-      isMounted = false;
-      clearTimeout(timerRef.current);
-      clearInterval(paint);
-    };
+    timerRef.current = setTimeout(loop, 120);
+    return () => { mounted = false; clearTimeout(timerRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const now = Date.now();
   const elapsedMs = Math.max(0, (endTime ?? now) - (startTime ?? now));
-  const secs = (elapsedMs / 1000);
-  const secsText = `${Math.floor(secs).toString().padStart(2, '0')}.${Math.floor((secs % 1) * 1000).toString().padStart(3,'0')}`;
+  const secs = elapsedMs / 1000;
+  const secsText = `${Math.floor(secs).toString().padStart(2,'0')}.${Math.floor((secs % 1)*1000).toString().padStart(3,'0')}`;
 
   return (
     <View style={{ flex: 1 }}>
       <StepperHeader stepIndex={4} />
       <View style={{ padding: 20, gap: 16 }}>
-        <Text style={{ fontSize: 24, fontWeight: '700' }}>Running…</Text>
+        <Text style={{ fontSize: 24, fontWeight: '800' }}>Running…</Text>
+        <Text style={{ fontSize: 48, fontWeight: '900' }}>{secsText} s</Text>
 
-        {/* Big timer */}
-        <Text style={{ fontSize: 48, fontWeight: '800', letterSpacing: 1 }}>{secsText} s</Text>
-
-        {/* Simple live stats from last reading */}
-        <LiveStats readings={readings} />
+        <Row label="Distance" value={`${live.distance.toFixed(2)} m`} />
+        <Row label="Speed"    value={`${live.speed.toFixed(2)} m/s`} />
+        <Row label="Accel"    value={`${live.accel.toFixed(2)} m/s²`} />
+        {SHOW_DEBUG && <Text style={{ color:'#999', fontSize:12 }}>Raw: {JSON.stringify(live)}</Text>}
       </View>
 
-      {/* Optional stop button for demo/testing */}
       <View style={{ padding: 20, marginTop: 'auto' }}>
         <Pressable
           onPress={() => navigation.replace('Finished')}
-          style={({ pressed }) => ({
-            backgroundColor: '#eee',
-            paddingVertical: 12,
-            borderRadius: 10,
-            alignItems: 'center',
-            opacity: pressed ? 0.8 : 1
-          })}
+          style={({ pressed }) => ({ backgroundColor:'#eee', paddingVertical:12, borderRadius:10, alignItems:'center', opacity:pressed?0.8:1 })}
         >
-          <Text style={{ fontWeight: '600' }}>Force Finish (debug)</Text>
+          <Text style={{ fontWeight:'600' }}>Force Finish (debug)</Text>
         </Pressable>
       </View>
     </View>
   );
 }
 
-function LiveStats({ readings }) {
-  const last = readings?.[readings.length - 1] || {};
-  const speed = Number(last.speed ?? 0);
-  const ax = Number(last.ax ?? 0), ay = Number(last.ay ?? 0);
-  const accel = Math.hypot(ax, ay);
-
+function Row({ label, value }) {
   return (
-    <View style={{ flexDirection: 'row', gap: 16 }}>
-      <Stat label="Speed" value={`${speed.toFixed(2)} m/s`} />
-      <Stat label="Accel" value={`${accel.toFixed(2)} m/s²`} />
-    </View>
-  );
-}
-
-function Stat({ label, value }) {
-  return (
-    <View style={{ flex: 1, borderWidth: 1, borderColor: '#eee', borderRadius: 12, padding: 14 }}>
-      <Text style={{ color: '#666', marginBottom: 4 }}>{label}</Text>
-      <Text style={{ fontSize: 20, fontWeight: '700' }}>{value}</Text>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+      <Text style={{ color:'#666' }}>{label}</Text>
+      <Text style={{ fontWeight:'800' }}>{value}</Text>
     </View>
   );
 }
