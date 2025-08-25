@@ -2,11 +2,23 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, Linking } from 'react-native';
 import StepperHeader from '../components/StepperHeader';
-import { getCar, getStart, getFinish } from '../api';
+import axios from 'axios';
+import {
+  getCar, getStart, getFinish,
+  setStartBase, setFinishBase, getStartBase, getFinishBase
+} from '../api';
 
-function openWifiSettings() {
-  // OSs don't allow apps to switch Wi-Fi automatically; this opens Settings
-  Linking.openSettings().catch(() => {});
+function openWifiSettings() { Linking.openSettings().catch(() => {}); }
+
+// Try a few likely DHCP IPs if 192.168.4.2/.3 fail
+async function discover(baseCandidates, path, sanity) {
+  for (const base of baseCandidates) {
+    try {
+      const { data } = await axios.get(`${base}${path}`, { timeout: 600 });
+      if (sanity(data)) return base;
+    } catch (_) {}
+  }
+  return null;
 }
 
 function StatusRow({ label, ok }) {
@@ -41,9 +53,27 @@ export default function ConnectScreen({ navigation }) {
         // Car/AP
         try { await getCar();    mounted && setApOK(true);    } catch { mounted && setApOK(false); }
         // Start
-        try { await getStart();  mounted && setStartOK(true); } catch { mounted && setStartOK(false); }
+        try { await getStart();  mounted && setStartOK(true); }
+        catch {
+          const found = await discover(
+            ['http://192.168.4.2','http://192.168.4.10','http://192.168.4.20','http://192.168.4.30','http://192.168.4.40','http://192.168.4.50','http://192.168.4.60'],
+            '/status',
+            d => d && (typeof d.ready !== 'undefined' || typeof d.distanceMm !== 'undefined' || typeof d.distance !== 'undefined')
+          );
+          if (found) { setStartBase(found); try { await getStart(); mounted && setStartOK(true); } catch { mounted && setStartOK(false); } }
+          else mounted && setStartOK(false);
+        }
         // Finish
-        try { await getFinish(); mounted && setFinishOK(true);} catch { mounted && setFinishOK(false); }
+        try { await getFinish(); mounted && setFinishOK(true);} 
+        catch {
+          const found = await discover(
+            ['http://192.168.4.3','http://192.168.4.10','http://192.168.4.20','http://192.168.4.30','http://192.168.4.40','http://192.168.4.50','http://192.168.4.60'],
+            '/status',
+            d => d && typeof d.finished !== 'undefined'
+          );
+          if (found) { setFinishBase(found); try { await getFinish(); mounted && setFinishOK(true); } catch { mounted && setFinishOK(false); } }
+          else mounted && setFinishOK(false);
+        }
       } finally {
         if (mounted) loopRef.current = setTimeout(tick, 900);
       }
@@ -85,6 +115,10 @@ export default function ConnectScreen({ navigation }) {
           >
             <Text style={{ fontWeight: '700' }}>Open Settings</Text>
           </Pressable>
+          {/* tiny debug line to see which IP was discovered */}
+          <Text style={{ color:'#999', fontSize:12 }}>
+            Start: {getStartBase()} · Finish: {getFinishBase()}
+          </Text>
         </View>
 
         {/* Status list */}
