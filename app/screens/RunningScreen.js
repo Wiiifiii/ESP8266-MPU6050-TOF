@@ -19,7 +19,6 @@ export default function RunningScreen({ navigation }) {
   const prevRef = useRef(null);
 
   useEffect(() => {
-    if (!startTime) setStartTime(Date.now());
     let mounted = true;
 
     const loop = async () => {

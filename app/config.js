@@ -9,3 +9,6 @@ export const SHOW_DEBUG = true;          // toggle a raw JSON/values line for qu
 export const ACCEL_UNITS = 'g';          // 'g' if firmware sends ax/ay in g; 'mps2' if already m/s^2
 export const G = 9.80665;
 export const ACCEL_SCALE = ACCEL_UNITS === 'g' ? G : 1;
+
+// NEW: manual start preference (keep false for button-only start)
+export const AUTO_START_ON_READY = false;

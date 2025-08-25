@@ -4,7 +4,7 @@ import { View, Text, Pressable } from 'react-native';
 import StepperHeader from '../components/StepperHeader';
 import { getStart, startDemoRun } from '../api';
 import { useLap } from '../context/LapContext';
-import { READY_THRESHOLD_MM, SHOW_DEBUG } from '../config';
+import { READY_THRESHOLD_MM, SHOW_DEBUG, AUTO_START_ON_READY } from '../config';
 
 export default function ReadyScreen({ navigation }) {
   const { setStartTime } = useLap();
@@ -30,16 +30,17 @@ export default function ReadyScreen({ navigation }) {
   const isReady = Number.isFinite(mm) && mm > 0 && mm <= READY_THRESHOLD_MM;
   setReady(isReady);
 
-        const now = Date.now();
-        if (isReady) {
-          if (!readySinceRef.current) readySinceRef.current = now;
-          // auto-advance if ready has been continuously true for 600ms
-          if (now - readySinceRef.current >= 600) {
-            beginRun();
-            return; // stop polling, navigate happens in beginRun
+        if (AUTO_START_ON_READY) {
+          const now = Date.now();
+          if (isReady) {
+            if (!readySinceRef.current) readySinceRef.current = now;
+            if (now - readySinceRef.current >= 600) {
+              beginRun();
+              return;
+            }
+          } else {
+            readySinceRef.current = null;
           }
-        } else {
-          readySinceRef.current = null;
         }
       } catch {
         // ignore transient errors; keep polling
@@ -92,11 +93,11 @@ export default function ReadyScreen({ navigation }) {
             opacity: pressed ? 0.85 : 1
           })}
         >
-          <Text style={{ color: 'white', fontWeight: '700' }}>Start run</Text>
+          <Text style={{ color: 'white', fontWeight: '700' }}>Start lap</Text>
         </Pressable>
 
         <Text style={{ color: '#999', fontSize: 12 }}>
-          Tip: It auto-starts after “Ready” is true for ~0.6 s.
+          Tip: Press “Start lap” when you’re ready. Auto-start is disabled.
         </Text>
       </View>
     </View>
