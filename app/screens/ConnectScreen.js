@@ -10,27 +10,21 @@ import {
 
 function openWifiSettings() { Linking.openSettings().catch(() => {}); }
 
-// Try a few likely DHCP IPs if 192.168.4.2/.3 fail
 async function discover(baseCandidates, path, sanity) {
   for (const base of baseCandidates) {
     try {
       const { data } = await axios.get(`${base}${path}`, { timeout: 600 });
       if (sanity(data)) return base;
-    } catch (_) {}
+    } catch {}
   }
   return null;
 }
 
-function StatusRow({ label, ok }) {
+function Row({ label, ok }) {
   return (
-    <View style={{
-      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-      paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee'
-    }}>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee' }}>
       <Text style={{ fontSize: 16, fontWeight: '600' }}>{label}</Text>
-      <Text style={{ fontSize: 18, fontWeight: '700', color: ok ? '#1a7f37' : '#c00' }}>
-        {ok ? '✓' : '—'}
-      </Text>
+      <Text style={{ fontSize: 18, fontWeight: '700', color: ok ? '#1a7f37' : '#c00' }}>{ok ? '✓' : '—'}</Text>
     </View>
   );
 }
@@ -42,17 +36,15 @@ export default function ConnectScreen({ navigation }) {
   const [isChecking, setIsChecking] = useState(true);
   const loopRef = useRef(null);
 
-  // Two-cable flow: allow Next when Car + Start are OK; Finish can be hot-plugged later
-  const allOK = apOK && startOK;
+  const allOK = apOK && startOK; // proceed with Car+Start; Finish can be hot-plugged later
 
   useEffect(() => {
     let mounted = true;
 
     async function tick() {
       try {
-        // Car/AP
-        try { await getCar();    mounted && setApOK(true);    } catch { mounted && setApOK(false); }
-        // Start
+        try { await getCar();    mounted && setApOK(true); }    catch { mounted && setApOK(false); }
+
         try { await getStart();  mounted && setStartOK(true); }
         catch {
           const found = await discover(
@@ -63,8 +55,8 @@ export default function ConnectScreen({ navigation }) {
           if (found) { setStartBase(found); try { await getStart(); mounted && setStartOK(true); } catch { mounted && setStartOK(false); } }
           else mounted && setStartOK(false);
         }
-        // Finish
-        try { await getFinish(); mounted && setFinishOK(true);} 
+
+        try { await getFinish(); mounted && setFinishOK(true); }
         catch {
           const found = await discover(
             ['http://192.168.4.3','http://192.168.4.10','http://192.168.4.20','http://192.168.4.30','http://192.168.4.40','http://192.168.4.50','http://192.168.4.60'],
@@ -81,13 +73,8 @@ export default function ConnectScreen({ navigation }) {
 
     setIsChecking(true);
     tick();
-    const settle = setTimeout(() => setIsChecking(false), 900);
-
-    return () => {
-      mounted = false;
-      clearTimeout(loopRef.current);
-      clearTimeout(settle);
-    };
+    const settle = setTimeout(() => mounted && setIsChecking(false), 900);
+    return () => { mounted = false; clearTimeout(loopRef.current); clearTimeout(settle); };
   }, []);
 
   return (
@@ -96,69 +83,33 @@ export default function ConnectScreen({ navigation }) {
       <View style={{ padding: 20, gap: 16 }}>
         <Text style={{ fontSize: 24, fontWeight: '800' }}>Connect devices</Text>
 
-        {/* Wi-Fi helper */}
-        <View style={{
-          borderWidth: 1, borderColor: '#eee', borderRadius: 16, padding: 16, gap: 10
-        }}>
-          <Text style={{ color: '#666' }}>
-            Join Wi-Fi network <Text style={{ fontWeight: '800' }}>RaceTimerNet</Text> first.
-            On a phone, disable mobile data so 192.168.4.x routes correctly.
-          </Text>
-          <Pressable
-            onPress={openWifiSettings}
-            style={({ pressed }) => ({
-              alignSelf: 'flex-start',
-              backgroundColor: '#f2f2f2',
-              paddingVertical: 10, paddingHorizontal: 12,
-              borderRadius: 10, opacity: pressed ? 0.85 : 1
-            })}
-          >
+        <View style={{ borderWidth: 1, borderColor: '#eee', borderRadius: 16, padding: 16, gap: 10 }}>
+          <Text style={{ color: '#666' }}>Join <Text style={{ fontWeight: '800' }}>RaceTimerNet</Text>. On a phone, disable mobile data.</Text>
+          <Pressable onPress={openWifiSettings} style={({pressed})=>({alignSelf:'flex-start',backgroundColor:'#f2f2f2',paddingVertical:10,paddingHorizontal:12,borderRadius:10,opacity:pressed?0.85:1})}>
             <Text style={{ fontWeight: '700' }}>Open Settings</Text>
           </Pressable>
-          {/* tiny debug line to see which IP was discovered */}
-          <Text style={{ color:'#999', fontSize:12 }}>
-            Start: {getStartBase()} · Finish: {getFinishBase()}
-          </Text>
+          <Text style={{ color:'#999', fontSize:12 }}>Start: {getStartBase()} · Finish: {getFinishBase()}</Text>
         </View>
 
-        {/* Status list */}
         <View style={{ borderWidth: 1, borderColor: '#eee', borderRadius: 16, paddingHorizontal: 16 }}>
-          <StatusRow label="Car/AP (192.168.4.1 /data)" ok={apOK} />
-          <StatusRow label="Start unit (192.168.4.2 /status)" ok={startOK} />
-          <StatusRow label="Finish unit (192.168.4.3 /status)" ok={finishOK} />
+          <Row label="Car/AP (192.168.4.1 /data)" ok={apOK} />
+          <Row label="Start unit (/status)" ok={startOK} />
+          <Row label="Finish unit (/status)" ok={finishOK} />
         </View>
 
         {isChecking && (
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-            <ActivityIndicator />
-            <Text style={{ color: '#666' }}>Checking…</Text>
+            <ActivityIndicator /><Text style={{ color: '#666' }}>Checking…</Text>
           </View>
         )}
 
         <View style={{ marginTop: 8, flexDirection: 'row', gap: 12 }}>
-          <Pressable
-            onPress={() => navigation.navigate('DriveToStart')}
-            disabled={!allOK}
-            style={({ pressed }) => ({
-              flex: 1,
-              backgroundColor: allOK ? '#6c47ff' : '#ccc',
-              paddingVertical: 14,
-              borderRadius: 12,
-              alignItems: 'center',
-              opacity: pressed ? 0.85 : 1
-            })}
-          >
+          <Pressable onPress={() => navigation.navigate('DriveToStart')} disabled={!allOK}
+            style={({ pressed }) => ({ flex: 1, backgroundColor: allOK ? '#6c47ff' : '#ccc', paddingVertical: 14, borderRadius: 12, alignItems: 'center', opacity: pressed ? 0.85 : 1 })}>
             <Text style={{ color: 'white', fontWeight: '700' }}>Next</Text>
           </Pressable>
-
-          <Pressable
-            onPress={() => { setIsChecking(true); setTimeout(() => setIsChecking(false), 900); }}
-            style={({ pressed }) => ({
-              paddingVertical: 14, paddingHorizontal: 16,
-              borderRadius: 12, borderWidth: 1, borderColor: '#ddd',
-              opacity: pressed ? 0.85 : 1
-            })}
-          >
+          <Pressable onPress={() => { setIsChecking(true); setTimeout(() => setIsChecking(false), 900); }}
+            style={({ pressed }) => ({ paddingVertical: 14, paddingHorizontal: 16, borderRadius: 12, borderWidth: 1, borderColor: '#ddd', opacity: pressed ? 0.85 : 1 })}>
             <Text style={{ fontWeight: '700' }}>Retry</Text>
           </Pressable>
         </View>
