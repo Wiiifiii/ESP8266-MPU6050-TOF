@@ -1,0 +1,12 @@
+{
+  "name": "esp8266-mpu6050-tof",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "cd app && npx expo start",
+    "start:clear": "cd app && npx expo start -c",
+    "android": "cd app && npx expo run:android",
+    "ios": "cd app && npx expo run:ios",
+    "web": "cd app && npx expo start --web"
+  }
+}
