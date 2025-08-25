@@ -1,73 +1,94 @@
 // screens/DriveToStartScreen.js
-import React, { useState, useEffect } from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
-import NetInfo from '@react-native-community/netinfo';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, Pressable } from 'react-native';
 import StepperHeader from '../components/StepperHeader';
-import { getCar } from '../api';
+import { getStart } from '../api';
+import { useLap } from '../context/LapContext';
+
+const READY_NEAR_MM = 120; // show "Continue" when within ~12 cm of start
 
 export default function DriveToStartScreen({ navigation }) {
-  const [wifiOK, setWifiOK]     = useState(false);
-  const [distance, setDistance] = useState(null);
+  const { trackDistance } = useLap();
+  const [distanceMm, setDistanceMm] = useState(null);
+  const [near, setNear] = useState(false);
+  const pollRef = useRef(null);
 
-  // 1) Track Wi-Fi connectivity
   useEffect(() => {
-    const unsub = NetInfo.addEventListener(state => {
-      setWifiOK(state.isConnected && state.type === 'wifi');
-    });
-    return () => unsub();
+    let mounted = true;
+    async function tick() {
+      try {
+        const { data } = await getStart();
+        if (!mounted) return;
+        const mm = Number(data?.distanceMm ?? data?.distance ?? NaN);
+        setDistanceMm(Number.isFinite(mm) ? mm : null);
+        setNear(Number.isFinite(mm) && mm <= READY_NEAR_MM);
+      } catch {
+        // keep previous values on transient errors
+      } finally {
+        pollRef.current = setTimeout(tick, 250);
+      }
+    }
+    tick();
+    return () => {
+      mounted = false;
+      clearTimeout(pollRef.current);
+    };
   }, []);
 
-  // 2) Poll CarUnit for distance every 2s
-  useEffect(() => {
-    if (!wifiOK) {
-      setDistance(null);
-      return;
-    }
-    const iv = setInterval(async () => {
-      try {
-        const res = await getCar();
-        setDistance(res.data?.distance ?? null);
-      } catch (e) {
-        setDistance(null);
-      }
-    }, 2000);
-    return () => clearInterval(iv);
-  }, [wifiOK]);
-
-  // At-start threshold: within 1 meter
-  const atStart = distance !== null && distance <= 1;
+  const mm = distanceMm ?? NaN;
+  const ratio = Number.isFinite(mm)
+    ? Math.max(0, Math.min(1, 1 - (mm / READY_NEAR_MM)))
+    : 0;
 
   return (
-    <View style={styles.screen}>
-  <StepperHeader stepIndex={2} />
-      <Text style={styles.header}>Drive to Start Line</Text>
-      <Text style={styles.instruction}>
-        Drive until your CarUnit is within 1 m of the start sensor.
-      </Text>
+    <View style={{ flex: 1 }}>
+      <StepperHeader stepIndex={2} />
+      <View style={{ padding: 20, gap: 16 }}>
+        <Text style={{ fontSize: 24, fontWeight: '800' }}>Drive to start area</Text>
+        <Text style={{ color: '#666' }}>
+          Track: <Text style={{ fontWeight: '700' }}>{Number(trackDistance)} m</Text>. Move the car toward the start sensor until it’s close enough.
+        </Text>
 
-      <Text style={styles.statusLine}>
-        {wifiOK ? '✔️ Wi‑Fi Connected' : '⭘ Wi‑Fi lost'}
-      </Text>
-      <Text style={styles.statusLine}>
-        {distance != null ? `${distance.toFixed(1)} m to start` : '–'}
-      </Text>
+        <View style={{ borderWidth: 1, borderColor: near ? '#1a7f37' : '#eee', borderRadius: 16, padding: 16, gap: 12 }}>
+          <Row label="Distance to start" value={Number.isFinite(mm) ? `${mm} mm` : '—'} bold />
+          <Row
+            label="Near enough"
+            value={near ? 'YES' : 'NO'}
+            valueStyle={{ color: near ? '#1a7f37' : '#c00', fontWeight: '800' }}
+          />
 
-      <View style={styles.footer}>
-        <Button
-          title="Next"
-          disabled={!atStart}
+          {/* Progress toward near-threshold */}
+          <View style={{ height: 10, backgroundColor: '#eee', borderRadius: 999, overflow: 'hidden', marginTop: 6 }}>
+            <View style={{ height: '100%', width: `${ratio * 100}%`, backgroundColor: near ? '#1a7f37' : '#6c47ff' }} />
+          </View>
+          <Text style={{ color: '#999', fontSize: 12 }}>
+            Hint: The button enables at ≤ {READY_NEAR_MM} mm. Next screen will arm the start and auto-begin when fully ready.
+          </Text>
+        </View>
+
+        <Pressable
           onPress={() => navigation.navigate('Ready')}
-          color={atStart ? '#7055e1' : '#999'}
-        />
+          disabled={!near}
+          style={({ pressed }) => ({
+            backgroundColor: near ? '#6c47ff' : '#ccc',
+            paddingVertical: 14,
+            borderRadius: 12,
+            alignItems: 'center',
+            opacity: pressed ? 0.85 : 1
+          })}
+        >
+          <Text style={{ color: 'white', fontWeight: '700' }}>Continue</Text>
+        </Pressable>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  screen:      { flex:1, backgroundColor:'#f7f7f7', padding:20 },
-  header:      { fontSize:24, fontWeight:'bold', marginBottom:16, color:'#2b2a33' },
-  instruction: { fontSize:16, marginBottom:20, color:'#2b2a33' },
-  statusLine:  { fontSize:18, marginBottom:10, color:'#2b2a33' },
-  footer:      { marginTop:20 },
-});
+function Row({ label, value, bold, valueStyle }) {
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+      <Text style={{ color: '#666' }}>{label}</Text>
+      <Text style={[{ fontWeight: bold ? '800' : '700' }, valueStyle]}>{value}</Text>
+    </View>
+  );
+}

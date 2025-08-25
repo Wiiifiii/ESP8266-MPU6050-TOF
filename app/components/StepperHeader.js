@@ -1,55 +1,24 @@
+// components/StepperHeader.js
 import React from 'react';
-import { View, StyleSheet, Text } from 'react-native';
-import StepIndicator from 'react-native-step-indicator';
+import { View, Text } from 'react-native';
 
-const labels = [
-  'Distance',
-  'Connect',
-  'Drive',
-  'Ready',
-  'Running',
-  'Finished'
-];
+const labels = ['Distance', 'Connect', 'Drive', 'Ready', 'Run', 'Finish'];
+const TOTAL = labels.length;
 
-const customStyles = {
-  stepIndicatorSize: 30,
-  currentStepIndicatorSize: 36,
-  separatorStrokeWidth: 2,
-  currentStepStrokeWidth: 3,
-  stepStrokeCurrentColor: '#fe4040',
-  stepStrokeWidth: 2,
-  stepStrokeFinishedColor: '#7055e1',
-  stepStrokeUnFinishedColor: '#2b2a33',
-  separatorFinishedColor: '#7055e1',
-  separatorUnFinishedColor: '#2b2a33',
-  stepIndicatorFinishedColor: '#7055e1',
-  stepIndicatorUnFinishedColor: '#2b2a33',
-  stepIndicatorCurrentColor: '#fe4040',
-  stepIndicatorLabelFontSize: 1,      // must be >0
-  currentStepIndicatorLabelFontSize: 1,
-  stepIndicatorLabelColor: 'transparent',
-  currentStepIndicatorLabelColor: 'transparent',
-  labelColor: '#2b2a33',
-  labelSize: 12,
-  currentStepLabelColor: '#fe4040'
-};
+export default function StepperHeader({ stepIndex = 0 }) {
+  const clamped = Math.max(0, Math.min(stepIndex, TOTAL - 1));
+  const pct = ((clamped) / (TOTAL - 1)) * 100;
 
-export default function StepperHeader({ stepIndex }) {
   return (
-    <View style={styles.container}>
-      <StepIndicator
-        customStyles={customStyles}
-        currentPosition={stepIndex}
-        labels={labels}
-        stepCount={labels.length}
-      />
+    <View style={{ paddingTop: 14, paddingHorizontal: 16, paddingBottom: 12, backgroundColor: 'white' }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
+        <Text style={{ fontWeight: '800', fontSize: 18 }}>{labels[clamped]}</Text>
+        <Text style={{ color: '#666' }}>{clamped + 1}/{TOTAL}</Text>
+      </View>
+
+      <View style={{ height: 8, backgroundColor: '#eee', borderRadius: 999, overflow: 'hidden' }}>
+        <View style={{ height: '100%', width: `${pct}%`, backgroundColor: '#6c47ff' }} />
+      </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    paddingVertical: 10,
-    backgroundColor: '#fff',
-  },
-});
