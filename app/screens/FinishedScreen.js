@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import StepperHeader from '../components/StepperHeader';
 import { useLap } from '../context/LapContext';
 import { computeMetrics } from '../utils/metrics';
@@ -23,26 +23,30 @@ export default function FinishedScreen({ navigation }) {
     startTime, endTime,
   });
 
-  // Ensure it’s in history once
+  // Ensure it’s in history once (store last 10; order irrelevant here)
   useEffect(() => {
     if (!summary) return;
     if (!lastSummary) setLastSummary(summary);
 
-    // Only push if an identical "when" isn't already in history
     const withWhen = { ...summary, when: endTime || Date.now() };
-    const already =
-      lapHistory?.some(s => Math.abs((s.when ?? 0) - (withWhen.when ?? 1)) < 5) ?? false;
-    if (!already) {
-      setLapHistory(prev => [withWhen, ...(prev || [])].slice(0, 10));
-    }
+    setLapHistory(prev => {
+      const arr = [withWhen, ...(prev || [])];
+      return arr.slice(0, 10);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // BEST FIRST for display (smallest elapsedMs first)
+  const sortedForDisplay = [...(lapHistory || [])].sort(
+    (a, b) => (a?.elapsedMs ?? Number.POSITIVE_INFINITY) - (b?.elapsedMs ?? Number.POSITIVE_INFINITY)
+  );
 
   return (
     <View style={{ flex: 1 }}>
       <StepperHeader stepIndex={5} />
 
-      <View style={{ padding: 20, gap: 18 }}>
+  {/* Scroll the full page so the history can grow */}
+  <ScrollView contentContainerStyle={{ padding: 20, gap: 18, paddingBottom: 40 }}>
         <Text style={{ fontSize: 26, fontWeight: '800' }}>Finished</Text>
         <Text style={{ color: '#666' }}>Track: {Number(trackDistance)} m</Text>
 
@@ -73,9 +77,9 @@ export default function FinishedScreen({ navigation }) {
           <Text style={{ color: 'white', fontWeight: '700', fontSize: 16 }}>New Lap</Text>
         </Pressable>
 
-        {/* Lap history list */}
-        <Text style={{ marginTop: 8, fontWeight: '800' }}>Lap history</Text>
-        <HistoryList items={lapHistory} />
+  {/* Lap history list */}
+  <Text style={{ marginTop: 8, fontWeight: '800' }}>Best & Last 10 Laps</Text>
+  <HistoryList items={sortedForDisplay} />
 
         {/* Optional: clear history */}
         <Pressable
@@ -92,7 +96,7 @@ export default function FinishedScreen({ navigation }) {
         >
           <Text style={{ fontWeight: '700' }}>Clear history</Text>
         </Pressable>
-      </View>
+  </ScrollView>
     </View>
   );
 }

@@ -1,6 +1,6 @@
 // components/HistoryList.js
 import React from 'react';
-import { View, Text, FlatList } from 'react-native';
+import { View, Text } from 'react-native';
 import { fmtTime, fmtSpeed, fmtAccel } from '../utils/format';
 
 export default function HistoryList({ items = [] }) {
@@ -13,17 +13,20 @@ export default function HistoryList({ items = [] }) {
   }
 
   return (
-    <FlatList
-      data={items}
-      keyExtractor={(_, idx) => `lap-${idx}`}
-      renderItem={({ item, index }) => (
-        <View style={{
-          paddingVertical: 12,
-          borderBottomWidth: index === items.length - 1 ? 0 : 1,
-          borderBottomColor: '#eee'
-        }}>
+    <View style={{ borderWidth: 1, borderColor: '#eee', borderRadius: 16, paddingHorizontal: 16 }}>
+      {items.map((item, index) => (
+        <View
+          key={`lap-${index}`}
+          style={{
+            paddingVertical: 12,
+            borderBottomWidth: index === items.length - 1 ? 0 : 1,
+            borderBottomColor: '#eee',
+          }}
+        >
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-            <Text style={{ fontWeight: '700' }}>Lap #{items.length - index}</Text>
+            <Text style={{ fontWeight: '700' }}>
+              {index === 0 ? '★ ' : ''}Lap {index + 1}
+            </Text>
             {item.when && (
               <Text style={{ color: '#999' }}>
                 {new Date(item.when).toLocaleTimeString()}
@@ -35,9 +38,8 @@ export default function HistoryList({ items = [] }) {
           <Row label="Max accel"   value={fmtAccel(item.maxAccel)} />
           <Row label="Avg speed"   value={fmtSpeed(item.avgSpeed)} />
         </View>
-      )}
-      style={{ borderWidth: 1, borderColor: '#eee', borderRadius: 16, paddingHorizontal: 16 }}
-    />
+      ))}
+    </View>
   );
 }
 
