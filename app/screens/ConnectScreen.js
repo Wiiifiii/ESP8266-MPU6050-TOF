@@ -1,23 +1,21 @@
 // screens/ConnectScreen.js
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, Linking } from 'react-native';
 import StepperHeader from '../components/StepperHeader';
 import { getCar, getStart, getFinish } from '../api';
 
-function StatusRow({ label, ok, hint }) {
+function openWifiSettings() {
+  // OSs don't allow apps to switch Wi-Fi automatically; this opens Settings
+  Linking.openSettings().catch(() => {});
+}
+
+function StatusRow({ label, ok }) {
   return (
     <View style={{
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 12,
-      borderBottomWidth: 1,
-      borderBottomColor: '#eee'
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+      paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee'
     }}>
-      <View>
-        <Text style={{ fontSize: 16, fontWeight: '600' }}>{label}</Text>
-        {!!hint && <Text style={{ color: '#666', marginTop: 2 }}>{hint}</Text>}
-      </View>
+      <Text style={{ fontSize: 16, fontWeight: '600' }}>{label}</Text>
       <Text style={{ fontSize: 18, fontWeight: '700', color: ok ? '#1a7f37' : '#c00' }}>
         {ok ? '✓' : '—'}
       </Text>
@@ -26,14 +24,14 @@ function StatusRow({ label, ok, hint }) {
 }
 
 export default function ConnectScreen({ navigation }) {
-  const [apOK, setApOK] = useState(false);      // Car/AP 192.168.4.1/data
-  const [startOK, setStartOK] = useState(false); // Start   192.168.4.2/status
-  const [finishOK, setFinishOK] = useState(false); // Finish 192.168.4.3/status
-
+  const [apOK, setApOK] = useState(false);
+  const [startOK, setStartOK] = useState(false);
+  const [finishOK, setFinishOK] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const loopRef = useRef(null);
 
-  const allOK = apOK && startOK && finishOK;
+  // Two-cable flow: allow Next when Car + Start are OK; Finish can be hot-plugged later
+  const allOK = apOK && startOK;
 
   useEffect(() => {
     let mounted = true;
@@ -41,19 +39,19 @@ export default function ConnectScreen({ navigation }) {
     async function tick() {
       try {
         // Car/AP
-        try { await getCar(); mounted && setApOK(true); } catch { mounted && setApOK(false); }
+        try { await getCar();    mounted && setApOK(true);    } catch { mounted && setApOK(false); }
         // Start
-        try { await getStart(); mounted && setStartOK(true); } catch { mounted && setStartOK(false); }
+        try { await getStart();  mounted && setStartOK(true); } catch { mounted && setStartOK(false); }
         // Finish
-        try { await getFinish(); mounted && setFinishOK(true); } catch { mounted && setFinishOK(false); }
+        try { await getFinish(); mounted && setFinishOK(true);} catch { mounted && setFinishOK(false); }
       } finally {
-        if (mounted) loopRef.current = setTimeout(tick, 800);
+        if (mounted) loopRef.current = setTimeout(tick, 900);
       }
     }
 
     setIsChecking(true);
     tick();
-    const settle = setTimeout(() => mounted && setIsChecking(false), 800);
+    const settle = setTimeout(() => setIsChecking(false), 900);
 
     return () => {
       mounted = false;
@@ -67,10 +65,29 @@ export default function ConnectScreen({ navigation }) {
       <StepperHeader stepIndex={1} />
       <View style={{ padding: 20, gap: 16 }}>
         <Text style={{ fontSize: 24, fontWeight: '800' }}>Connect devices</Text>
-        <Text style={{ color: '#666' }}>
-          Make sure you’re connected to <Text style={{ fontWeight: '700' }}>RaceTimerNet</Text>.
-        </Text>
 
+        {/* Wi-Fi helper */}
+        <View style={{
+          borderWidth: 1, borderColor: '#eee', borderRadius: 16, padding: 16, gap: 10
+        }}>
+          <Text style={{ color: '#666' }}>
+            Join Wi-Fi network <Text style={{ fontWeight: '800' }}>RaceTimerNet</Text> first.
+            On a phone, disable mobile data so 192.168.4.x routes correctly.
+          </Text>
+          <Pressable
+            onPress={openWifiSettings}
+            style={({ pressed }) => ({
+              alignSelf: 'flex-start',
+              backgroundColor: '#f2f2f2',
+              paddingVertical: 10, paddingHorizontal: 12,
+              borderRadius: 10, opacity: pressed ? 0.85 : 1
+            })}
+          >
+            <Text style={{ fontWeight: '700' }}>Open Settings</Text>
+          </Pressable>
+        </View>
+
+        {/* Status list */}
         <View style={{ borderWidth: 1, borderColor: '#eee', borderRadius: 16, paddingHorizontal: 16 }}>
           <StatusRow label="Car/AP (192.168.4.1 /data)" ok={apOK} />
           <StatusRow label="Start unit (192.168.4.2 /status)" ok={startOK} />
@@ -101,18 +118,10 @@ export default function ConnectScreen({ navigation }) {
           </Pressable>
 
           <Pressable
-            onPress={() => {
-              // force a re-check cycle quickly
-              setIsChecking(true);
-              clearTimeout(loopRef.current);
-              loopRef.current = setTimeout(() => setIsChecking(false), 800);
-            }}
+            onPress={() => { setIsChecking(true); setTimeout(() => setIsChecking(false), 900); }}
             style={({ pressed }) => ({
-              paddingVertical: 14,
-              paddingHorizontal: 16,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: '#ddd',
+              paddingVertical: 14, paddingHorizontal: 16,
+              borderRadius: 12, borderWidth: 1, borderColor: '#ddd',
               opacity: pressed ? 0.85 : 1
             })}
           >
