@@ -2,27 +2,36 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import StepperHeader from '../components/StepperHeader';
-import { getStart, startDemoRun } from '../api';
+import { getStart, getFinish, startDemoRun } from '../api';
 import { useLap } from '../context/LapContext';
-import { READY_THRESHOLD_MM, SHOW_DEBUG, AUTO_START_ON_READY } from '../config';
+import { READY_THRESHOLD_MM, SHOW_DEBUG, AUTO_START_ON_READY, FINISH_TOO_CLOSE_UI_MM } from '../config';
 
 export default function ReadyScreen({ navigation }) {
   const { setStartTime } = useLap();
   const [distanceMm, setDistanceMm] = useState(null);
   const [ready, setReady] = useState(false);
   const pollRef = useRef(null);
+  const [finishTooClose, setFinishTooClose] = useState(false);
+  const [finishDistanceMm, setFinishDistanceMm] = useState(null);
   const readySinceRef = useRef(null);
 
   useEffect(() => {
     let mounted = true;
     async function tick() {
       try {
-        const { data } = await getStart();
+        const [{ data: s }, { data: f }] = await Promise.all([
+          getStart().catch(() => ({ data: {} })),
+          getFinish().catch(() => ({ data: {} })),
+        ]);
         if (!mounted) return;
-        const mm = Number(data?.distanceMm ?? data?.distance ?? NaN);
+        const mm = Number(s?.distanceMm ?? s?.distance ?? NaN);
         setDistanceMm(Number.isFinite(mm) ? mm : null);
-        const isReady = Number.isFinite(mm) && mm > 0 && mm <= READY_THRESHOLD_MM;
+  const isReady = Number.isFinite(mm) && mm > 0 && mm <= READY_THRESHOLD_MM;
         setReady(isReady);
+  const dist = (typeof f?.distanceMm === 'number') ? f.distanceMm : Infinity;
+  setFinishDistanceMm(Number.isFinite(dist) ? dist : null);
+  const tooClose = Number.isFinite(dist) ? (dist <= FINISH_TOO_CLOSE_UI_MM) : (f?.finished === true || f?.finished === 1);
+  setFinishTooClose(!!tooClose);
 
         if (AUTO_START_ON_READY) {
           const now = Date.now();
@@ -46,6 +55,7 @@ export default function ReadyScreen({ navigation }) {
     navigation.replace('Running');
   }
 
+  const canStart = ready && !finishTooClose;
   return (
     <View style={{ flex: 1 }}>
       <StepperHeader stepIndex={3} />
@@ -59,10 +69,17 @@ export default function ReadyScreen({ navigation }) {
           {SHOW_DEBUG && <Text style={{ color:'#999', fontSize:12 }}>Raw: {distanceMm == null ? '—' : `${distanceMm} mm`}</Text>}
         </View>
 
-        <Pressable onPress={beginRun} disabled={!ready}
-          style={({ pressed }) => ({ backgroundColor: ready ? '#6c47ff' : '#ccc', paddingVertical: 14, borderRadius: 12, alignItems: 'center', opacity: pressed ? 0.85 : 1 })}>
-          <Text style={{ color: 'white', fontWeight: '700' }}>Start lap</Text>
+        <Pressable onPress={beginRun} disabled={!canStart}
+          style={({ pressed }) => ({ backgroundColor: canStart ? '#6c47ff' : '#ccc', paddingVertical: 14, borderRadius: 12, alignItems: 'center', opacity: pressed ? 0.85 : 1 })}>
+          <Text style={{ color: 'white', fontWeight: '700' }}>
+            {finishTooClose ? `Move away from Finish sensor (<${FINISH_TOO_CLOSE_UI_MM} mm)` : 'Start lap'}
+          </Text>
         </Pressable>
+        {finishTooClose && (
+          <Text style={{ color:'#c00', marginTop:8 }}>
+            Finish distance: {finishDistanceMm == null ? '—' : `${finishDistanceMm} mm`}
+          </Text>
+        )}
       </View>
     </View>
   );
