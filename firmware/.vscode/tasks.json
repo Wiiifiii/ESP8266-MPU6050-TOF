@@ -1,0 +1,35 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build all PlatformIO envs",
+			"type": "shell",
+			"command": "pio run -e car -e start -e finish",
+			"args": [],
+			"problemMatcher": [
+				"$platformio"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Build Finish env",
+			"type": "shell",
+			"command": "C:\\Users\\wefky\\.platformio\\penv\\Scripts\\platformio.exe run --environment finish",
+			"args": [],
+			"problemMatcher": [
+				"$platformio"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Build Car env",
+			"type": "shell",
+			"command": "C:\\Users\\wefky\\.platformio\\penv\\Scripts\\platformio.exe run --environment car",
+			"args": [],
+			"problemMatcher": [
+				"$platformio"
+			],
+			"group": "build"
+		}
+	]
+}
