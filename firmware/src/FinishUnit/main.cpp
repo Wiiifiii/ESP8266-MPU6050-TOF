@@ -15,31 +15,32 @@ IPAddress      STA_SN    (255,255,255,0);
 ESP8266WebServer serverFinish(80);
 Adafruit_VL53L1X tofFinish;
 
-// finish threshold & state
-const float FINISH_THRESH = 0.05f;  // 5 cm
+// finish thresholds & state (with hysteresis)
+constexpr uint16_t FINISH_ON_MM  = 50; // beam broken when ≤ 50 mm
+constexpr uint16_t FINISH_OFF_MM = 80; // reset when > 80 mm
 bool  finished = false;
-float dist_m  = 0;
+uint16_t dist_mm  = 9999;
 
 void handleStatusFinish() {
   // pull new sample if ready
   if (tofFinish.dataReady()) {
-    uint16_t mm = tofFinish.distance();       // millimeters
+    dist_mm = tofFinish.distance();       // millimeters
     tofFinish.clearInterrupt();
-    dist_m = mm / 1000.0f;                    // meters
 
-    Serial.print("mm="); Serial.print(mm);
-    Serial.print(" dist_m="); Serial.println(dist_m,3);
+    Serial.print("mm="); Serial.println(dist_mm);
   }
 
-  // detect finish
-  if (!finished && dist_m <= FINISH_THRESH) {
+  // detect finish with hysteresis
+  if (!finished && dist_mm <= FINISH_ON_MM) {
     finished = true;
     Serial.println("🏁 Finish triggered!");
+  } else if (finished && dist_mm > FINISH_OFF_MM) {
+    finished = false;
   }
 
   // send JSON status
   String js = "{";
-  js += "\"distance\":"  + String(dist_m,3) + ",";
+  js += "\"distanceMm\":"  + String(dist_mm) + ",";
   js += "\"finished\":"  + String(finished ? "true":"false");
   js += "}";
   serverFinish.send(200, "application/json", js);
@@ -57,6 +58,9 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.config(STA_IP_FIN, STA_GW, STA_SN);
   WiFi.begin(SSID);
+  WiFi.setSleep(false);
+  WiFi.setAutoReconnect(true);
+  WiFi.persistent(true);
   Serial.print("📶 FinishUnit joining");
   while (WiFi.status() != WL_CONNECTED) {
     delay(200);
@@ -69,6 +73,8 @@ void setup() {
     Serial.println("❌ VL53L1X not found");
     while (1) delay(10);
   }
+  // Use a stable timing budget; keep default distance mode if library doesn't expose it here
+  tofFinish.setTimingBudget(50);
   tofFinish.startRanging();  // ← replaces startContinuous()
   Serial.println("✅ VL53L1X ranging");
 
