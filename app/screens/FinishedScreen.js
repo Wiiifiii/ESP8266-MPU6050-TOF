@@ -5,7 +5,7 @@ import StepperHeader from '../components/StepperHeader';
 import { useLap } from '../context/LapContext';
 import { computeMetrics } from '../utils/metrics';
 import { fmtTime, fmtSpeed, fmtAccel } from '../utils/format';
-import HistoryList from '../components/HistoryList';
+import HistoryPanel from '../components/HistoryPanel';
 
 export default function FinishedScreen({ navigation }) {
   const { trackDistance, startTime, endTime, readings, lastSummary, setLastSummary, lapHistory, setLapHistory, resetLap } = useLap();
@@ -15,13 +15,10 @@ export default function FinishedScreen({ navigation }) {
   useEffect(() => {
     if (!summary) return;
     if (!lastSummary) setLastSummary(summary);
-    const withWhen = { ...summary, when: endTime || Date.now() };
-    setLapHistory(prev => [withWhen, ...(prev || [])].slice(0, 10));
+    // History append now occurs on the finish edge in RunningScreen.
   }, []);
 
-  const sortedForDisplay = [...(lapHistory || [])].sort(
-    (a, b) => (a?.elapsedMs ?? 1e12) - (b?.elapsedMs ?? 1e12)
-  );
+  // HistoryPanel pins best lap and shows last 10 excluding best.
 
   return (
     <View style={{ flex: 1 }}>
@@ -39,8 +36,8 @@ export default function FinishedScreen({ navigation }) {
           style={({ pressed }) => ({ backgroundColor:'#6c47ff', paddingVertical:14, borderRadius:12, alignItems:'center', opacity:pressed?0.85:1 })}>
           <Text style={{ color:'white', fontWeight:'700', fontSize:16 }}>New Lap</Text>
         </Pressable>
-        <Text style={{ marginTop: 8, fontWeight: '800' }}>Best & Last 10 Laps</Text>
-        <HistoryList items={sortedForDisplay} />
+  <Text style={{ marginTop: 8, fontWeight: '800' }}>Best & Last 10 Laps</Text>
+  <HistoryPanel />
         <Pressable onPress={() => setLapHistory([])}
           style={({ pressed }) => ({ marginTop:12, paddingVertical:10, borderRadius:10, borderWidth:1, borderColor:'#ddd', alignItems:'center', opacity:pressed?0.85:1 })}>
           <Text style={{ fontWeight:'700' }}>Clear history</Text>
