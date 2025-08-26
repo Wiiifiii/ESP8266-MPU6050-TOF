@@ -3,6 +3,7 @@
 export const USE_DEMO = false; // real hardware
 export const NEAR_THRESHOLD_MM  = 120; // used on Drive screen
 export const READY_THRESHOLD_MM = 60;  // used on Ready screen (≈ 6 cm)
+export const FINISH_TOO_CLOSE_UI_MM = 10; // UI guard: block start if finish is closer than this
 
 // Telemetry options
 export const SHOW_DEBUG = false;         // hide debug UI for demo
