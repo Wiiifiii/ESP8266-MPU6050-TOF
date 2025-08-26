@@ -26,13 +26,10 @@ uint8_t              medIdx  = 0;
 bool                 medFull = false;
 
 // — Thresholds (in mm) —
-constexpr uint16_t READY_MM   = 50;   // ≤50 mm → “ready”
-constexpr uint16_t TRIG_MM    = 2;    // ≤2 mm → “trigger”
+constexpr uint16_t READY_MM   = 120;  // ≤120 mm → “ready” (manual start alignment)
 
-// — Run state & timing —
+// — Run state —
 bool     ready     = false;
-bool     triggered = false;
-uint32_t startMs   = 0;
 
 // Push a new raw sample into our circular median buffer
 void addSample(uint16_t mm) {
@@ -62,7 +59,7 @@ uint16_t getMedian() {
   return tmp[count/2];
 }
 
-// HTTP GET /status → JSON with { distanceMm, ready, triggered, startMs?, elapsedMs? }
+// HTTP GET /status → JSON with { distanceMm, ready }
 void handleStatus() {
   // 1) read new TOF data if available
   if (tof.dataReady()) {
@@ -70,27 +67,17 @@ void handleStatus() {
     tof.clearInterrupt();
     addSample(raw);
 
-    // 2) update flags
+    // 2) update flag (no auto-trigger in manual start flow)
     uint16_t filt = getMedian();
     ready = (filt <= READY_MM);
-    if (!triggered && raw <= TRIG_MM) {
-      triggered = true;
-      startMs = millis();
-    }
   }
 
   // 3) build JSON response
   uint16_t distMm = getMedian();
-  uint32_t elapsed = triggered ? (millis() - startMs) : 0;
 
   String js = "{";
   js += "\"distanceMm\":" + String(distMm)    + ",";
-  js += "\"ready\":"      + String(ready     ? "true":"false") + ",";
-  js += "\"triggered\":"  + String(triggered ? "true":"false");
-  if (triggered) {
-    js += ",\"startMs\":"   + String(startMs);
-    js += ",\"elapsedMs\":" + String(elapsed);
-  }
+  js += "\"ready\":"      + String(ready ? "true":"false");
   js += "}";
 
   server.send(200, "application/json", js);
@@ -110,6 +97,9 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.config(STA_IP, STA_GW, STA_SN);
   WiFi.begin(SSID);
+  WiFi.setSleep(false);
+  WiFi.setAutoReconnect(true);
+  WiFi.persistent(true);
   Serial.print("📶 Connecting to “"); Serial.print(SSID); Serial.print("”");
   uint32_t t0 = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - t0 < 10000) {
@@ -131,6 +121,8 @@ void setup() {
     Serial.println(" ✅ OK");
     delay(50); yield();
 
+  // Use a stable timing budget; distance mode left at library default if not available
+  tof.setTimingBudget(50); // milliseconds
     Serial.print("⏳ Starting continuous mode…");
     tof.startRanging();  // ~30 Hz by default
     Serial.println(" ✅ OK");
