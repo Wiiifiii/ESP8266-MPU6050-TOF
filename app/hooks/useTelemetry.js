@@ -26,18 +26,40 @@ export function useTelemetry(endpoints, running) {
 
   useEffect(() => {
     let alive = true;
-    const tick = async () => {
-      const [c, s, f] = await Promise.all([
-        getJSON(`${endpoints.car}/data`),
-        getJSON(`${endpoints.start}/status`),
-        getJSON(`${endpoints.finish}/status`),
-      ]);
-      if (!alive) return;
-      const now = Date.now();
-      if (c) { setCar(c);   setLastSeen(ls => ({ ...ls, car: now })); }
-      if (s) { setStart(s); setLastSeen(ls => ({ ...ls, start: now })); }
-      if (f) { setFinish(f);setLastSeen(ls => ({ ...ls, finish: now })); }
-      setTimeout(tick, 200);
+    const tick = () => {
+      // Fire-and-forget polls; each stamps lastSeen only on success.
+      (async () => {
+        const f = await getJSON(`${endpoints.finish}/status`);
+        if (!alive) return;
+        if (f) {
+          setFinish(f);
+          const ts = Date.now();
+          setLastSeen(ls => ({ ...ls, finish: ts }));
+        }
+      })();
+
+      (async () => {
+        const s = await getJSON(`${endpoints.start}/status`);
+        if (!alive) return;
+        if (s) {
+          setStart(s);
+          const ts = Date.now();
+          setLastSeen(ls => ({ ...ls, start: ts }));
+        }
+      })();
+
+      (async () => {
+        const c = await getJSON(`${endpoints.car}/data`);
+        if (!alive) return;
+        if (c) {
+          setCar(c);
+          const ts = Date.now();
+          setLastSeen(ls => ({ ...ls, car: ts }));
+        }
+      })();
+
+      // Keep a steady cadence regardless of slow/failed requests
+      setTimeout(() => alive && tick(), 250);
     };
     tick();
     return () => { alive = false; };
