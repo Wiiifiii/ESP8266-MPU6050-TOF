@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import StepperHeader from '../components/StepperHeader';
-import { getCar, getFinish } from '../api';
+import { getCar, getFinish, discoverUnits, ensureDistinctRoles } from '../api';
 import { useLap } from '../context/LapContext';
 import { computeMetrics } from '../utils/metrics';
 import { SHOW_DEBUG, FINISH_TOO_CLOSE_UI_MM } from '../config';
@@ -16,9 +16,11 @@ export default function RunningScreen({ navigation }) {
   const armedRef = useRef(true);           // start armed; re-arm after idle
   const lastFinishChangeRef = useRef(0);   // hold-off timer
 
-  // Use new telemetry hook (fixed IP endpoints to match firmware)
-  const endpoints = { car: 'http://192.168.4.1', start: 'http://192.168.4.2', finish: 'http://192.168.4.3' };
-  const { elapsedMs, car, start, finish, lastSeen } = useTelemetry(endpoints, true);
+  // Use telemetry hook; bases come from API getters; no hard-coded IPs
+  const { elapsedMs, car, start, finish, lastSeen } = useTelemetry(undefined, true);
+
+  // Ensure distinct endpoints on mount
+  useEffect(() => { (async () => { try { await discoverUnits(); await ensureDistinctRoles(); } catch {} })(); }, []);
 
   // Append latest car sample into readings for metrics/history
   useEffect(() => {
@@ -30,16 +32,20 @@ export default function RunningScreen({ navigation }) {
     });
   }, [car?.speed, car?.accel, car?.pitch, car?.roll, car?.ax, car?.ay, car?.az, car?.distance]);
 
-  // Decide robust finish signal: require freshness + boolean OR near distance
-  const FINISH_ON_MM_UI = Math.max(FINISH_TOO_CLOSE_UI_MM, 45);
-  const FRESH_MS = 1500;
+  // Decide robust finish signal with ultra-near fallback
+  const FINISH_ON_MM_UI = Math.max(FINISH_TOO_CLOSE_UI_MM || 0, 45);
+  const FRESH_MS = 2000;
   const HOLD_MS  = 500;  // hold-off from start
   const DWELL_MS = 250;  // continuous true dwell to allow fail-safe
   const nowTs = Date.now();
   const seenFinish = !!lastSeen?.finish && (nowTs - (lastSeen.finish ?? 0) < FRESH_MS);
   const fBool = finish?.finished === true || finish?.finished === 'true';
-  const fNear = (typeof finish?.distanceMm === 'number') && (finish.distanceMm <= FINISH_ON_MM_UI);
+  const hasMmDet = typeof finish?.distanceMm === 'number';
+  const fNear = hasMmDet && (finish.distanceMm <= FINISH_ON_MM_UI);
   const fFresh = seenFinish && (fBool || fNear);   // ← only trust fresh signals
+  const ULTRA_NEAR_MM = 25;
+  const fUltra = hasMmDet && (finish.distanceMm <= ULTRA_NEAR_MM) && (!!lastSeen?.finish && (nowTs - (lastSeen.finish ?? 0) < 5000));
+  const fUse = fFresh || fUltra;
 
   // UI tri-state with freshness and distance display
   // (keep tri-state UI; this uses a looser 2s 'seen' window for display)
@@ -53,43 +59,43 @@ export default function RunningScreen({ navigation }) {
   const runStartRef = useRef(Date.now());
   const firstTrueTsRef = useRef(null);
   const sawFalseRef = useRef(false);
+  const prevRef = useRef(false);
+  const lastChangeRef = useRef(Date.now());
 
   // Initialize on mount (RUNNING begins)
   useEffect(() => {
     runStartRef.current = Date.now();
     armedRef.current = false;
     prevFinished.current = false;
-    lastFinishChangeRef.current = Date.now();
+    lastChangeRef.current = Date.now();
     firstTrueTsRef.current = null;
     sawFalseRef.current = false;
   }, []);
 
-  // Maintain arming after idle (>500ms no finish)
+  // Maintain arming after idle (>500ms no finish) and track changes
   useEffect(() => {
     const now = Date.now();
-    const raw = fFresh; // only fresh signals affect arming/edges
-    const prev = prevFinished.current;
-    if (raw !== prev) lastFinishChangeRef.current = now;
-    if (!raw) {
+    const s = fUse;
+    if (s !== prevRef.current) lastChangeRef.current = now;
+    if (!s) {
       sawFalseRef.current = true;           // observed idle
       firstTrueTsRef.current = null;        // reset dwell
-      // arm when sensor has been idle (no true) for ≥500 ms
-      if (now - lastFinishChangeRef.current >= HOLD_MS) armedRef.current = true;
+      if (now - lastChangeRef.current >= HOLD_MS) armedRef.current = true;
     } else if (firstTrueTsRef.current == null) {
       firstTrueTsRef.current = now;         // start dwell on first TRUE
     }
-    prevFinished.current = raw;
-  }, [fFresh]);
+    prevRef.current = s;
+  }, [fUse]);
 
   // Finish decision: normal rising-edge OR fail-safe dwell
   useEffect(() => {
     const now = Date.now();
-    const holdOkNormal = (now - lastFinishChangeRef.current) >= HOLD_MS; // stability window for normal
-    const holdOkStart  = (now - runStartRef.current) >= HOLD_MS;         // startup hold-off
+  const holdOkNormal = (now - lastChangeRef.current) >= HOLD_MS; // stability window for normal
+  const holdOkStart  = (now - runStartRef.current) >= HOLD_MS;         // startup hold-off
     const dwellOk = firstTrueTsRef.current != null && (now - firstTrueTsRef.current) >= DWELL_MS;
 
-    const canFinishNormal   = fFresh && holdOkNormal && armedRef.current && !finishingLock.current;
-    const canFinishFailSafe = fFresh && holdOkStart  && dwellOk && !sawFalseRef.current && !finishingLock.current;
+  const canFinishNormal   = fUse && holdOkNormal && armedRef.current && !finishingLock.current;
+  const canFinishFailSafe = fUse && holdOkStart  && dwellOk && !sawFalseRef.current && !finishingLock.current;
 
     if (canFinishNormal || canFinishFailSafe) {
       finishingLock.current = true;
@@ -110,7 +116,7 @@ export default function RunningScreen({ navigation }) {
       navigation.replace('Finished');
       setTimeout(() => { finishingLock.current = false; }, 300);
     }
-  }, [fFresh, car?.speed, car?.accel]);
+  }, [fUse, car?.speed, car?.accel]);
 
   const prettyMs = (ms) => {
     const s = Math.floor(ms/1000);

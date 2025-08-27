@@ -1,6 +1,7 @@
 // app/hooks/useTelemetry.js
 import { useEffect, useRef, useState } from 'react';
 import { useStopwatch } from './useStopwatch';
+import api, { getCar, getStart, getFinish, discoverUnits, getStartBase, getFinishBase } from '../api';
 
 async function getJSON(url, timeout = 1500) {
   const ctrl = new AbortController();
@@ -23,47 +24,65 @@ export function useTelemetry(endpoints, running) {
   const [finish, setFinish] = useState({});
   const [lastSeen, setLastSeen] = useState({});
   const prevFinished = useRef(false);
+  const fail = useRef({ car: 0, start: 0, finish: 0 });
+  const recovering = useRef(false);
 
   useEffect(() => {
     let alive = true;
-    const tick = () => {
-      // Fire-and-forget polls; each stamps lastSeen only on success.
-      (async () => {
-        const f = await getJSON(`${endpoints.finish}/status`);
-        if (!alive) return;
-        if (f) {
-          setFinish(f);
+    const tick = async () => {
+      // Poll FINISH
+      try {
+        const r = await getFinish();
+        if (alive && r?.data) {
+          setFinish(r.data);
           const ts = Date.now();
           setLastSeen(ls => ({ ...ls, finish: ts }));
+          fail.current.finish = 0;
         }
-      })();
+      } catch {
+        fail.current.finish++;
+      }
 
-      (async () => {
-        const s = await getJSON(`${endpoints.start}/status`);
-        if (!alive) return;
-        if (s) {
-          setStart(s);
+      // Poll START
+      try {
+        const r = await getStart();
+        if (alive && r?.data) {
+          setStart(r.data);
           const ts = Date.now();
           setLastSeen(ls => ({ ...ls, start: ts }));
+          fail.current.start = 0;
         }
-      })();
+      } catch {
+        fail.current.start++;
+      }
 
-      (async () => {
-        const c = await getJSON(`${endpoints.car}/data`);
-        if (!alive) return;
-        if (c) {
-          setCar(c);
+      // Poll CAR
+      try {
+        const r = await getCar();
+        if (alive && r?.data) {
+          setCar(r.data);
           const ts = Date.now();
           setLastSeen(ls => ({ ...ls, car: ts }));
+          fail.current.car = 0;
         }
-      })();
+      } catch {
+        fail.current.car++;
+      }
 
-      // Keep a steady cadence regardless of slow/failed requests
-      setTimeout(() => alive && tick(), 250);
+      // Auto-recovery: if Start or Finish fails repeatedly, try discovery once
+      const needRecover = (fail.current.start >= 8) || (fail.current.finish >= 8);
+      if (needRecover && !recovering.current) {
+        recovering.current = true;
+        try { await discoverUnits(); } catch {}
+        fail.current.start = 0; fail.current.finish = 0;
+        setTimeout(() => { recovering.current = false; }, 1000);
+      }
+
+      if (alive) setTimeout(tick, 250);
     };
     tick();
     return () => { alive = false; };
-  }, [endpoints.car, endpoints.start, endpoints.finish]);
+  }, [running]);
 
   const finishEdge = finish.finished === true && !prevFinished.current;
   useEffect(() => { prevFinished.current = finish.finished === true; }, [finish.finished]);
