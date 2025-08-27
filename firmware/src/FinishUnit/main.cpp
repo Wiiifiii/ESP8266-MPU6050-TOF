@@ -24,6 +24,10 @@ IPAddress      STA_IP_FIN(192,168,4,3);
 IPAddress      STA_GW    (192,168,4,1);
 IPAddress      STA_SN    (255,255,255,0);
 
+// — I²C pins —
+#define SDA_PIN 4    // D2
+#define SCL_PIN 5    // D1
+
 // — Globals —
 ESP8266WebServer serverFinish(80);
 Adafruit_VL53L1X tofFinish;
@@ -62,9 +66,9 @@ void setup() {
   Serial.println("\n⏳ FinishUnit Booting...");
 
   // I2C on SDA=GPIO4, SCL=GPIO5
-  Wire.begin(4, 5);
+  Wire.begin(SDA_PIN, SCL_PIN);
   Wire.setClock(400000); // Fast-mode I2C for stability
-  Serial.println("✅ I2C on SDA=GPIO4, SCL=GPIO5");
+  Serial.printf("✅ I2C on SDA=GPIO%d, SCL=GPIO%d\n", SDA_PIN, SCL_PIN);
 
   // Join the RaceTimerNet AP
   WiFi.mode(WIFI_STA);
