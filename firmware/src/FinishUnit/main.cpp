@@ -5,6 +5,19 @@
 #include <ESP8266WebServer.h>
 #include <Adafruit_VL53L1X.h>
 
+
+
+// Thresholds (allow overrides via -DFINISH_ON_MM=... -DFINISH_OFF_MM=...)
+#ifndef FINISH_ON_MM
+#define FINISH_ON_MM 50
+#endif
+#ifndef FINISH_OFF_MM
+#define FINISH_OFF_MM 80
+#endif
+#ifndef TIMING_BUDGET_MS
+#define TIMING_BUDGET_MS 100
+#endif
+
 // — Wi-Fi settings —
 const char*    SSID        = "RaceTimerNet";
 IPAddress      STA_IP_FIN(192,168,4,3);
@@ -16,35 +29,29 @@ ESP8266WebServer serverFinish(80);
 Adafruit_VL53L1X tofFinish;
 
 // finish thresholds & state (with hysteresis)
-constexpr uint16_t FINISH_ON_MM  = 50; // beam broken when ≤ 50 mm
-constexpr uint16_t FINISH_OFF_MM = 80; // reset when > 80 mm
 bool  finished = false;
 uint16_t dist_mm  = 9999;
+uint32_t samples = 0;
+uint32_t lastSampleMs = 0;
+bool sensorAlive = false;
+uint32_t invalidCount = 0;
 
 void handleStatusFinish() {
-  // pull new sample if ready
-  if (tofFinish.dataReady()) {
-    dist_mm = tofFinish.distance();       // millimeters
-    tofFinish.clearInterrupt();
-
-    Serial.print("mm="); Serial.println(dist_mm);
-  }
-
-  // detect finish with hysteresis
-  if (!finished && dist_mm <= FINISH_ON_MM) {
-    finished = true;
-    Serial.println("🏁 Finish triggered!");
-  } else if (finished && dist_mm > FINISH_OFF_MM) {
-    finished = false;
-  }
-
-  // send JSON status
+  // send JSON status (latest sampled values)
+  const uint32_t age = millis() - lastSampleMs;
+  sensorAlive = (age < 500);
   String js = "{";
+  js += "\"role\":\"FINISH\",";
   js += "\"distanceMm\":"  + String(dist_mm) + ",";
-  js += "\"finished\":"  + String(finished ? "true":"false");
+  js += "\"finished\":"  + String(finished ? "true":"false") + ",";
+  js += "\"alive\":"     + String(sensorAlive ? "true":"false") + ",";
+  js += "\"samples\":"   + String(samples) + ",";
+  js += "\"lastSampleAgeMs\":" + String(age);
+  js += ",\"invalid\":" + String(invalidCount);
   js += "}";
   serverFinish.send(200, "application/json", js);
 }
+void handleWhoAmI() { serverFinish.send(200, "application/json", "{\"role\":\"FINISH\"}"); }
 
 void setup() {
   Serial.begin(115200);
@@ -73,19 +80,68 @@ void setup() {
     Serial.println("❌ VL53L1X not found");
     while (1) delay(10);
   }
-  // Use a stable timing budget; keep default distance mode if library doesn't expose it here
-  tofFinish.setTimingBudget(50);
+  // Configure sensor for close-range, stable readings
+  // Use ST-style method exposed by Adafruit wrapper where available
+  (void)tofFinish.VL53L1X_SetDistanceMode(1); // 1 = SHORT, ignore return if not supported
+  tofFinish.setTimingBudget(TIMING_BUDGET_MS);
   tofFinish.startRanging();  // ← replaces startContinuous()
   Serial.println("✅ VL53L1X ranging");
+  Serial.print("Thresholds: ON≤"); Serial.print(FINISH_ON_MM);
+  Serial.print("mm, OFF>"); Serial.print(FINISH_OFF_MM);
+  Serial.print("mm, Budget="); Serial.print(TIMING_BUDGET_MS);
+  Serial.println("ms");
 
   // HTTP endpoint
   serverFinish.on("/status", HTTP_GET, handleStatusFinish);
+  serverFinish.on("/whoami", HTTP_GET, handleWhoAmI);
   serverFinish.begin();
   Serial.println("✔ FinishUnit HTTP up");
 }
 
 void loop() {
+  // Sample sensor independently of HTTP polling
+  static uint32_t lastLogMs = 0;
+  uint8_t ready = 0;
+  // Prefer ST-style calls to avoid stale/invalid reads
+  if (tofFinish.VL53L1X_CheckForDataReady(&ready) == 0 && ready) {
+    uint16_t mm = 0;
+    if (tofFinish.VL53L1X_GetDistance(&mm) == 0) {
+      // Filter obviously invalid readings
+      if (mm == 0 || mm == 65535 || mm > 4000) {
+        invalidCount++;
+      } else {
+        dist_mm = mm;
+        samples++;
+        lastSampleMs = millis();
+
+        // Hysteresis
+        if (!finished && dist_mm <= FINISH_ON_MM) {
+          finished = true;
+          Serial.println("🏁 Finish triggered!");
+        } else if (finished && dist_mm > FINISH_OFF_MM) {
+          finished = false;
+        }
+      }
+    }
+    tofFinish.VL53L1X_ClearInterrupt();
+
+    if (millis() - lastLogMs > 500) {
+      lastLogMs = millis();
+      Serial.print("mm="); Serial.print(dist_mm);
+      Serial.print(" finished="); Serial.print(finished ? "1" : "0");
+      Serial.print(" invalid="); Serial.println(invalidCount);
+    }
+  }
+  // Keep ranging alive if stale
+  const uint32_t now = millis();
+  if (now - lastSampleMs > 1500) {
+    tofFinish.stopRanging();
+    delay(5);
+    tofFinish.startRanging();
+  }
+
   serverFinish.handleClient();
+  delay(5);
 }
 
 // #include <Arduino.h>

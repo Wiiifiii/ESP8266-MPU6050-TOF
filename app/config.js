@@ -1,9 +1,10 @@
 // app/config.js
 // export const USE_DEMO = true; // set to false on real hardware
 export const USE_DEMO = false; // real hardware
-export const NEAR_THRESHOLD_MM  = 120; // used on Drive screen
-export const READY_THRESHOLD_MM = 60;  // used on Ready screen (≈ 6 cm)
-export const FINISH_TOO_CLOSE_UI_MM = 10; // UI guard: block start if finish is closer than this
+
+// Indoor-friendly defaults
+export const NEAR_THRESHOLD_MM  = 120; // Drive screen
+export const READY_THRESHOLD_MM = 60;  // Ready screen (≈ 6 cm)
 
 // Telemetry options
 export const SHOW_DEBUG = false;         // hide debug UI for demo
@@ -13,3 +14,14 @@ export const ACCEL_SCALE = ACCEL_UNITS === 'g' ? G : 1;
 
 // NEW: manual start preference (keep false for button-only start)
 export const AUTO_START_ON_READY = false;
+
+// NEW: show/hide the connection footer
+export const SHOW_CONNECTION_FOOTER = true; // show by default; flip to false to hide
+
+// NEW: discover units on app boot
+export const DISCOVER_UNITS_ON_BOOT = true;
+
+// Ready gate (Finish too close) — OFF by default for indoor table tests.
+// If you want to require being exactly on the line later, set to true and use ~40 mm.
+export const BLOCK_WHEN_FINISH_TOO_CLOSE = false;
+export const FINISH_TOO_CLOSE_UI_MM = 40;

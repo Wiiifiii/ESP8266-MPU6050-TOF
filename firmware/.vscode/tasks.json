@@ -30,6 +30,11 @@
 				"$platformio"
 			],
 			"group": "build"
+		},
+		{
+			"label": "Upload Finish env",
+			"type": "shell",
+			"command": "C:\\Users\\wefky\\.platformio\\penv\\Scripts\\platformio.exe run -t upload --environment finish"
 		}
 	]
 }

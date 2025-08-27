@@ -93,6 +93,25 @@ void ImuFusion::calibrate() {
   bias.gx = gx/N; bias.gy = gy/N; bias.gz = gz/N;
 }
 
+void ImuFusion::beginLearnForward() {
+  learning = true; learnCount = 0;
+  sumX = sumY = sumZ = sumAbsX = sumAbsY = sumAbsZ = 0.0f;
+}
+
+bool ImuFusion::endLearnForward() {
+  learning = false;
+  if (learnCount < 50) return false; // not enough data
+  float mX = sumX/learnCount, mY = sumY/learnCount, mZ = sumZ/learnCount;
+  float sX = sumAbsX/learnCount, sY = sumAbsY/learnCount, sZ = sumAbsZ/learnCount;
+  auto score = [](float m, float s){ return 0.6f*fabsf(m) + 0.4f*fabsf(s - fabsf(m)); };
+  float scX = score(mX, sX), scY = score(mY, sY), scZ = score(mZ, sZ);
+  Axis ax = X; float sc = scX; float mean = mX;
+  if (scY > sc) { ax = Y; sc = scY; mean = mY; }
+  if (scZ > sc) { ax = Z; sc = scZ; mean = mZ; }
+  setForward(ax, (mean >= 0) ? +1 : -1);
+  return true;
+}
+
 void ImuFusion::update() {
   unsigned long nowUs = micros();
   float dt = (nowUs - lastUs) * 1e-6f;
@@ -116,12 +135,50 @@ void ImuFusion::update() {
   st.pitchDeg = ALPHA_COMP*(st.pitchDeg + gxd*dt) + (1.0f-ALPHA_COMP)*pitchAcc;
   st.rollDeg  = ALPHA_COMP*(st.rollDeg  + gyd*dt) + (1.0f-ALPHA_COMP)*rollAcc;
 
-  // Gravity along forward X in g
-  float sp = sinf(st.pitchDeg*0.0174533f);
-  float gxg = -sp;
+  // Gravity components in g from orientation
+  float sp = sinf(st.pitchDeg*0.0174533f), cp = cosf(st.pitchDeg*0.0174533f);
+  float sr = sinf(st.rollDeg*0.0174533f),  cr = cosf(st.rollDeg*0.0174533f);
 
-  // Linear accel X (m/s^2), low-pass
-  float ax_lin = (axg - gxg) * G;
+  // Approx gravity in body frame (g). For simplicity use small-angle form; roll affects Y/Z predominantly
+  float gXg = -sp;            // gravity along body X in g
+  float gYg = sr*cp;          // approximate
+  float gZg = cr*cp;          // approximate
+
+  // Gravity-removed linear acceleration (m/s^2) in body axes
+  float aX = (axg - gXg) * G;
+  float aY = (ayg - gYg) * G;
+  float aZ = (azg - gZg) * G;
+
+  // Low-pass filter each axis
+  aX_lpf = lpf(aX_lpf, aX, LPF_A);
+  aY_lpf = lpf(aY_lpf, aY, LPF_A);
+  aZ_lpf = lpf(aZ_lpf, aZ, LPF_A);
+
+  st.aX_mps2 = aX_lpf;
+  st.aY_mps2 = aY_lpf;
+  st.aZ_mps2 = aZ_lpf;
+
+  // Convenience: vertical ~ Z, lateral ~ Y (body frame)
+  st.aLat_mps2  = aY_lpf;
+  st.aVert_mps2 = aZ_lpf;
+
+  if (learning) {
+    sumX += aX; sumY += aY; sumZ += aZ;
+    sumAbsX += fabsf(aX); sumAbsY += fabsf(aY); sumAbsZ += fabsf(aZ);
+    ++learnCount;
+  }
+
+  // Choose forward axis and sign based on learned orientation
+  float ax_lin = 0.0f;
+  switch (fwdAxis) {
+    case X: ax_lin = aX_lpf; break;
+    case Y: ax_lin = aY_lpf; break;
+    case Z: ax_lin = aZ_lpf; break;
+  }
+  ax_lin *= (float)fwdSign;
+
+  // Spike clamp, then LPF to forward accel
+  if (fabsf(ax_lin) > 30.0f) ax_lin = 0.0f;
   st.aF_mps2 = lpf(st.aF_mps2, ax_lin, LPF_A);
 
   // Integrate to speed with leak

@@ -22,9 +22,12 @@ void handleData() {
   json += "\"accel\":"     + String(st.aF_mps2, 5) + ",";
   json += "\"pitch\":"     + String(st.pitchDeg, 2) + ",";
   json += "\"roll\":"      + String(st.rollDeg, 2) + ",";
-  json += "\"ax\":"        + String(st.ax_g, 5) + ",";
-  json += "\"ay\":"        + String(st.ay_g, 5) + ",";
-  json += "\"az\":"        + String(st.az_g, 5) + ",";
+  // gravity-removed linear acceleration (m/s^2) and convenience axes
+  json += "\"ax\":"        + String(st.aX_mps2, 5) + ",";
+  json += "\"ay\":"        + String(st.aY_mps2, 5) + ",";
+  json += "\"az\":"        + String(st.aZ_mps2, 5) + ",";
+  json += "\"aLat\":"      + String(st.aLat_mps2, 5) + ",";
+  json += "\"aVert\":"     + String(st.aVert_mps2, 5) + ",";
   json += "\"distance\":"  + String(st.distance_m, 3) + ",";
   json += "\"sampleHz\":"  + String(st.sampleHz, 1) + ",";
   json += "\"rssi\":"      + String(WiFi.RSSI());
@@ -53,6 +56,8 @@ void setup() {
 
   // HTTP endpoint
   server.on("/data", HTTP_GET, handleData);
+  server.on("/learn_forward/start", HTTP_GET, [](){ imu.beginLearnForward(); server.send(200, "application/json", "{\"ok\":true}"); });
+  server.on("/learn_forward/stop",  HTTP_GET, [](){ bool ok = imu.endLearnForward(); server.send(200, "application/json", String("{\"ok\":" ) + (ok?"true":"false") + "}"); });
   server.begin();
   Serial.println("✔ CarUnit HTTP server up");
 

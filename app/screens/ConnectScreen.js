@@ -5,7 +5,8 @@ import StepperHeader from '../components/StepperHeader';
 import axios from 'axios';
 import {
   getCar, getStart, getFinish,
-  setStartBase, setFinishBase, getStartBase, getFinishBase
+  setStartBase, setFinishBase, getStartBase, getFinishBase,
+  discoverFinish
 } from '../api';
 
 function openWifiSettings() { Linking.openSettings().catch(() => {}); }
@@ -35,11 +36,15 @@ export default function ConnectScreen({ navigation }) {
   const [finishOK, setFinishOK] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const loopRef = useRef(null);
+  const finishFailCountRef = useRef(0);
 
   const allOK = apOK && startOK; // proceed with Car+Start; Finish can be hot-plugged later
 
   useEffect(() => {
     let mounted = true;
+
+  // Ensure default FINISH_BASE is correct at app start if stale
+  try { if (getFinishBase() !== 'http://192.168.4.3') setFinishBase('http://192.168.4.3'); } catch {}
 
     async function tick() {
       try {
@@ -56,15 +61,33 @@ export default function ConnectScreen({ navigation }) {
           else mounted && setStartOK(false);
         }
 
-        try { await getFinish(); mounted && setFinishOK(true); }
+        try { await getFinish(); mounted && setFinishOK(true); finishFailCountRef.current = 0; }
         catch {
           const found = await discover(
             ['http://192.168.4.3','http://192.168.4.10','http://192.168.4.20','http://192.168.4.30','http://192.168.4.40','http://192.168.4.50','http://192.168.4.60'],
             '/status',
             d => d && typeof d.finished !== 'undefined'
           );
-          if (found) { setFinishBase(found); try { await getFinish(); mounted && setFinishOK(true); } catch { mounted && setFinishOK(false); } }
-          else mounted && setFinishOK(false);
+          if (found) {
+            setFinishBase(found);
+            try { await getFinish(); mounted && setFinishOK(true); } catch { mounted && setFinishOK(false); }
+            finishFailCountRef.current = 0;
+          } else {
+            finishFailCountRef.current++;
+            // After 3 failures in a row, try quick auto-discovery helper
+            if (finishFailCountRef.current >= 3) {
+              const autoFound = await discoverFinish();
+              if (autoFound) {
+                console.log('Finish auto-discovered at', autoFound);
+                try { await getFinish(); mounted && setFinishOK(true); } catch { mounted && setFinishOK(false); }
+                finishFailCountRef.current = 0;
+              } else {
+                mounted && setFinishOK(false);
+              }
+            } else {
+              mounted && setFinishOK(false);
+            }
+          }
         }
       } finally {
         if (mounted) loopRef.current = setTimeout(tick, 900);

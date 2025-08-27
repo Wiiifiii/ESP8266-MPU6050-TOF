@@ -61,18 +61,7 @@ uint16_t getMedian() {
 
 // HTTP GET /status → JSON with { distanceMm, ready }
 void handleStatus() {
-  // 1) read new TOF data if available
-  if (tof.dataReady()) {
-    uint16_t raw = tof.distance();     // millimeters
-    tof.clearInterrupt();
-    addSample(raw);
-
-    // 2) update flag (no auto-trigger in manual start flow)
-    uint16_t filt = getMedian();
-    ready = (filt <= READY_MM);
-  }
-
-  // 3) build JSON response
+  // Build JSON from the latest computed state (updated in loop)
   uint16_t distMm = getMedian();
 
   String js = "{";
@@ -121,8 +110,8 @@ void setup() {
     Serial.println(" ✅ OK");
     delay(50); yield();
 
-  // Use a stable timing budget; distance mode left at library default if not available
-  tof.setTimingBudget(50); // milliseconds
+    // Use a stable timing budget; distance mode left at library default if not available
+    tof.setTimingBudget(50); // milliseconds
     Serial.print("⏳ Starting continuous mode…");
     tof.startRanging();  // ~30 Hz by default
     Serial.println(" ✅ OK");
@@ -135,6 +124,22 @@ void setup() {
 }
 
 void loop() {
+  // Update sensor continuously so HTTP always serves fresh state
+  if (tof.dataReady()) {
+    uint16_t raw = tof.distance(); // millimeters (library returns 0 when out-of-range)
+    tof.clearInterrupt();
+    addSample(raw);
+
+    uint16_t filt = getMedian();
+    ready = (filt > 0 && filt <= READY_MM);
+    // Optional: lightweight debug every ~200ms when ready changes
+    static bool prevReady = false;
+    if (prevReady != ready) {
+      prevReady = ready;
+      Serial.print("[Start] dist="); Serial.print(filt); Serial.print(" mm ready="); Serial.println(ready ? "1" : "0");
+    }
+  }
+
   server.handleClient();  // non-blocking
   yield();
 }

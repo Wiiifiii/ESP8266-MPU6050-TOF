@@ -14,7 +14,7 @@ function Row({ lap, highlight=false }) {
   return (
     <View style={{
       padding: 12, borderRadius: 12,
-      backgroundColor: highlight ? '#1f2937' : '#111827',
+      backgroundColor: highlight ? '#ebeef1ff' : '#dadee7ff',
       borderWidth: highlight ? 1 : 0, borderColor: '#374151',
       marginBottom: 8
     }}>

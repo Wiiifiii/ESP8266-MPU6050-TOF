@@ -2,9 +2,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import StepperHeader from '../components/StepperHeader';
-import { getStart, getFinish, startDemoRun } from '../api';
+import { getStart, getFinish, startDemoRun, startLearnForward, stopLearnForward } from '../api';
 import { useLap } from '../context/LapContext';
-import { READY_THRESHOLD_MM, SHOW_DEBUG, AUTO_START_ON_READY, FINISH_TOO_CLOSE_UI_MM } from '../config';
+import { READY_THRESHOLD_MM, SHOW_DEBUG, AUTO_START_ON_READY, BLOCK_WHEN_FINISH_TOO_CLOSE, FINISH_TOO_CLOSE_UI_MM } from '../config';
 
 export default function ReadyScreen({ navigation }) {
   const { setStartTime } = useLap();
@@ -13,24 +13,30 @@ export default function ReadyScreen({ navigation }) {
   const pollRef = useRef(null);
   const [finishTooClose, setFinishTooClose] = useState(false);
   const [finishDistanceMm, setFinishDistanceMm] = useState(null);
+  const [learningMsg, setLearningMsg] = useState('');
   const readySinceRef = useRef(null);
 
   useEffect(() => {
     let mounted = true;
     async function tick() {
       try {
-        const [{ data: s }, { data: f }] = await Promise.all([
+  const [{ data: s }, { data: f }] = await Promise.all([
           getStart().catch(() => ({ data: {} })),
           getFinish().catch(() => ({ data: {} })),
         ]);
         if (!mounted) return;
         const mm = Number(s?.distanceMm ?? s?.distance ?? NaN);
         setDistanceMm(Number.isFinite(mm) ? mm : null);
-  const isReady = Number.isFinite(mm) && mm > 0 && mm <= READY_THRESHOLD_MM;
-        setReady(isReady);
+        const reportedReady = (s?.ready === true || s?.ready === 'true' || s?.ready === 1);
+        const isReady = Number.isFinite(mm) && mm > 0
+          ? (mm <= READY_THRESHOLD_MM)
+          : reportedReady;
+        setReady(!!isReady);
   const dist = (typeof f?.distanceMm === 'number') ? f.distanceMm : Infinity;
   setFinishDistanceMm(Number.isFinite(dist) ? dist : null);
-  const tooClose = Number.isFinite(dist) ? (dist <= FINISH_TOO_CLOSE_UI_MM) : (f?.finished === true || f?.finished === 1);
+  const tooClose = BLOCK_WHEN_FINISH_TOO_CLOSE
+    ? (Number.isFinite(dist) ? (dist <= FINISH_TOO_CLOSE_UI_MM) : (f?.finished === true || f?.finished === 'true' || f?.finished === 1))
+    : false;
   setFinishTooClose(!!tooClose);
 
         if (AUTO_START_ON_READY) {
@@ -55,6 +61,24 @@ export default function ReadyScreen({ navigation }) {
     navigation.replace('Running');
   }
 
+  async function autoSetForward() {
+    try {
+      setLearningMsg('Drive straight ~1–2 s…');
+      await startLearnForward();
+      const delayMs = 1800;
+      await new Promise(res => setTimeout(res, delayMs));
+      const { data } = await stopLearnForward().catch(() => ({ data: { ok:false } }));
+      if (data && data.ok) {
+        setLearningMsg('Forward set');
+        setTimeout(() => setLearningMsg(''), 1200);
+      } else {
+        setLearningMsg('Couldn\'t detect—try again accelerating straight.');
+      }
+    } catch (e) {
+      setLearningMsg('Couldn\'t detect—try again accelerating straight.');
+    }
+  }
+
   const canStart = ready && !finishTooClose;
   return (
     <View style={{ flex: 1 }}>
@@ -75,6 +99,11 @@ export default function ReadyScreen({ navigation }) {
             {finishTooClose ? `Move away from Finish sensor (<${FINISH_TOO_CLOSE_UI_MM} mm)` : 'Start lap'}
           </Text>
         </Pressable>
+        <Pressable onPress={autoSetForward}
+          style={({ pressed }) => ({ marginTop: 10, backgroundColor:'#eee', paddingVertical: 12, borderRadius: 10, alignItems:'center', opacity: pressed?0.85:1 })}>
+          <Text style={{ fontWeight:'700' }}>Auto-set Forward</Text>
+        </Pressable>
+        {!!learningMsg && <Text style={{ marginTop:6, color:'#666' }}>{learningMsg}</Text>}
         {finishTooClose && (
           <Text style={{ color:'#c00', marginTop:8 }}>
             Finish distance: {finishDistanceMm == null ? '—' : `${finishDistanceMm} mm`}

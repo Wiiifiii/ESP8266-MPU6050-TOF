@@ -19,13 +19,23 @@ struct ImuState {
 
   // optional diagnostics
   float sampleHz=0;
+
+  // NEW: gravity-removed linear acceleration (m/s^2) in body axes
+  float aX_mps2=0, aY_mps2=0, aZ_mps2=0;
+  // convenience: lateral (Y) & vertical (Z) in body frame
+  float aLat_mps2=0, aVert_mps2=0;
 };
 
 class ImuFusion {
 public:
+  enum Axis { X=0, Y=1, Z=2 };
   void begin();
   void update();
   const ImuState& state() const { return st; }
+
+  void setForward(Axis axis, int sign) { fwdAxis = axis; fwdSign = (sign >= 0) ? 1 : -1; }
+  void beginLearnForward();
+  bool endLearnForward(); // returns true if a forward axis was found and set
 
 private:
   bool readScaled(float& ax_g, float& ay_g, float& az_g, float& gx_dps, float& gy_dps, float& gz_dps);
@@ -37,6 +47,16 @@ private:
   unsigned long lastUs = 0;
   unsigned long sampWinUs = 0;
   uint16_t sampCount = 0;
+
+  // forward-axis selection
+  Axis fwdAxis = X;
+  int  fwdSign = +1;
+  bool learning = false;
+  uint16_t learnCount = 0;
+  float sumX=0,sumY=0,sumZ=0, sumAbsX=0,sumAbsY=0,sumAbsZ=0;
+
+  // LPF state for linear accel on each axis
+  float aX_lpf=0, aY_lpf=0, aZ_lpf=0;
 
   // tunables
   const float ALPHA_COMP = 0.98f;    // complementary filter weight
