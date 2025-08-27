@@ -58,6 +58,7 @@ void setup() {
   server.on("/data", HTTP_GET, handleData);
   server.on("/learn_forward/start", HTTP_GET, [](){ imu.beginLearnForward(); server.send(200, "application/json", "{\"ok\":true}"); });
   server.on("/learn_forward/stop",  HTTP_GET, [](){ bool ok = imu.endLearnForward(); server.send(200, "application/json", String("{\"ok\":" ) + (ok?"true":"false") + "}"); });
+  server.on("/whoami", HTTP_GET, [](){ server.send(200, "application/json", "{\"role\":\"CAR\"}"); });
   server.begin();
   Serial.println("✔ CarUnit HTTP server up");
 

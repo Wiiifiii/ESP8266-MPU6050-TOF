@@ -106,18 +106,20 @@ void loop() {
   if (tofFinish.VL53L1X_CheckForDataReady(&ready) == 0 && ready) {
     uint16_t mm = 0;
     if (tofFinish.VL53L1X_GetDistance(&mm) == 0) {
-      // Filter obviously invalid readings
-      if (mm == 0 || mm == 65535 || mm > 4000) {
+      // Treat 0 mm as "very close" (some boards report 0 when target is on the window)
+      bool nearZero = (mm == 0);
+      // Filter obviously invalid values only
+      if (mm == 65535 || mm > 4000) {
         invalidCount++;
       } else {
-        dist_mm = mm;
+        dist_mm = nearZero ? 1 : mm; // clamp 0→1 so JSON/logic has a real mm
         samples++;
         lastSampleMs = millis();
 
-        // Hysteresis
-        if (!finished && dist_mm <= FINISH_ON_MM) {
+        // Hysteresis: 0 mm or <= ON → finished; > OFF → clear
+        if (!finished && (nearZero || dist_mm <= FINISH_ON_MM)) {
           finished = true;
-          Serial.println("🏁 Finish triggered!");
+          Serial.println("🏁 Finish TRUE");
         } else if (finished && dist_mm > FINISH_OFF_MM) {
           finished = false;
         }

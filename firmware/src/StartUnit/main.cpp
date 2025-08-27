@@ -119,6 +119,7 @@ void setup() {
 
   // Setup HTTP endpoint
   server.on("/status", HTTP_GET, handleStatus);
+  server.on("/whoami", HTTP_GET, [](){ server.send(200, "application/json", "{\"role\":\"START\"}"); });
   server.begin();
   Serial.println("✔ HTTP server up: GET /status");
 }
