@@ -35,8 +35,8 @@ export default function RunningScreen({ navigation }) {
   // Decide robust finish signal with ultra-near fallback
   const FINISH_ON_MM_UI = Math.max(FINISH_TOO_CLOSE_UI_MM || 0, 45);
   const FRESH_MS = 2000;
-  const HOLD_MS  = 500;  // hold-off from start
-  const DWELL_MS = 250;  // continuous true dwell to allow fail-safe
+  const HOLD_MS  = 200;  // hold-off and stability window (reduced to catch brief passes)
+  const DWELL_MS = 200;  // continuous true dwell to allow fail-safe
   const nowTs = Date.now();
   const seenFinish = !!lastSeen?.finish && (nowTs - (lastSeen.finish ?? 0) < FRESH_MS);
   const fBool = finish?.finished === true || finish?.finished === 'true';
@@ -91,13 +91,15 @@ export default function RunningScreen({ navigation }) {
   useEffect(() => {
     const now = Date.now();
   const holdOkNormal = (now - lastChangeRef.current) >= HOLD_MS; // stability window for normal
-  const holdOkStart  = (now - runStartRef.current) >= HOLD_MS;         // startup hold-off
+  const holdOkStart  = (now - runStartRef.current) >= HOLD_MS;   // startup hold-off
     const dwellOk = firstTrueTsRef.current != null && (now - firstTrueTsRef.current) >= DWELL_MS;
 
   const canFinishNormal   = fUse && holdOkNormal && armedRef.current && !finishingLock.current;
-  const canFinishFailSafe = fUse && holdOkStart  && dwellOk && !sawFalseRef.current && !finishingLock.current;
+  const canFinishFailSafe = fUse && holdOkStart && dwellOk && !finishingLock.current;
+  // Ultra-near path: allow immediate finish on very close (<= ULTRA_NEAR_MM) with startup hold-off
+  const canFinishUltra    = fUltra && holdOkStart && armedRef.current && !finishingLock.current;
 
-    if (canFinishNormal || canFinishFailSafe) {
+    if (canFinishUltra || canFinishNormal || canFinishFailSafe) {
       finishingLock.current = true;
       armedRef.current = false;
       setEndTime(now);
@@ -116,7 +118,7 @@ export default function RunningScreen({ navigation }) {
       navigation.replace('Finished');
       setTimeout(() => { finishingLock.current = false; }, 300);
     }
-  }, [fUse, car?.speed, car?.accel]);
+  }, [fUse, elapsedMs, car?.speed, car?.accel]);
 
   const prettyMs = (ms) => {
     const s = Math.floor(ms/1000);

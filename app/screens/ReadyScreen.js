@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import StepperHeader from '../components/StepperHeader';
-import { getStart, getFinish, startDemoRun, startLearnForward, stopLearnForward } from '../api';
+import { getStart, getFinish, startDemoRun, startLearnForward, stopLearnForward, discoverUnits, ensureDistinctRoles } from '../api';
 import { useLap } from '../context/LapContext';
 import { READY_THRESHOLD_MM, SHOW_DEBUG, AUTO_START_ON_READY, BLOCK_WHEN_FINISH_TOO_CLOSE, FINISH_TOO_CLOSE_UI_MM } from '../config';
 
@@ -15,9 +15,13 @@ export default function ReadyScreen({ navigation }) {
   const [finishDistanceMm, setFinishDistanceMm] = useState(null);
   const [learningMsg, setLearningMsg] = useState('');
   const readySinceRef = useRef(null);
+  const failStartRef = useRef(0);
+  const failFinishRef = useRef(0);
 
   useEffect(() => {
     let mounted = true;
+    // Ensure endpoints are set before polling
+    (async () => { try { await discoverUnits(); await ensureDistinctRoles(); } catch {} })();
     async function tick() {
       try {
   const [{ data: s }, { data: f }] = await Promise.all([
@@ -28,7 +32,7 @@ export default function ReadyScreen({ navigation }) {
         const mm = Number(s?.distanceMm ?? s?.distance ?? NaN);
         setDistanceMm(Number.isFinite(mm) ? mm : null);
         const reportedReady = (s?.ready === true || s?.ready === 'true' || s?.ready === 1);
-        const isReady = Number.isFinite(mm) && mm > 0
+        const isReady = Number.isFinite(mm) && mm >= 0
           ? (mm <= READY_THRESHOLD_MM)
           : reportedReady;
         setReady(!!isReady);
@@ -38,6 +42,16 @@ export default function ReadyScreen({ navigation }) {
     ? (Number.isFinite(dist) ? (dist <= FINISH_TOO_CLOSE_UI_MM) : (f?.finished === true || f?.finished === 'true' || f?.finished === 1))
     : false;
   setFinishTooClose(!!tooClose);
+
+        // Track failures and auto-recover by rediscovering endpoints
+        const startOk = Number.isFinite(mm) || typeof s?.ready !== 'undefined';
+        const finishOk = Number.isFinite(dist) || typeof f?.finished !== 'undefined';
+        failStartRef.current = startOk ? 0 : Math.min(50, failStartRef.current + 1);
+        failFinishRef.current = finishOk ? 0 : Math.min(50, failFinishRef.current + 1);
+        if (failStartRef.current >= 8 || failFinishRef.current >= 8) {
+          try { await discoverUnits(); await ensureDistinctRoles(); } catch {}
+          failStartRef.current = 0; failFinishRef.current = 0;
+        }
 
         if (AUTO_START_ON_READY) {
           const now = Date.now();
@@ -50,7 +64,7 @@ export default function ReadyScreen({ navigation }) {
         pollRef.current = setTimeout(tick, 250);
       }
     }
-    tick();
+  tick();
     return () => { mounted = false; clearTimeout(pollRef.current); };
   }, []);
 

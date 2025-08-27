@@ -27,6 +27,10 @@ IPAddress      STA_SN    (255,255,255,0);
 // — Globals —
 ESP8266WebServer serverFinish(80);
 Adafruit_VL53L1X tofFinish;
+// Optional XSHUT pin (define at build time: -DTOF_XSHUT_PIN=12 (D6) for example)
+#ifdef TOF_XSHUT_PIN
+  const int TOF_XSHUT = TOF_XSHUT_PIN;
+#endif
 
 // finish thresholds & state (with hysteresis)
 bool  finished = false;
@@ -59,6 +63,7 @@ void setup() {
 
   // I2C on SDA=GPIO4, SCL=GPIO5
   Wire.begin(4, 5);
+  Wire.setClock(400000); // Fast-mode I2C for stability
   Serial.println("✅ I2C on SDA=GPIO4, SCL=GPIO5");
 
   // Join the RaceTimerNet AP
@@ -75,16 +80,22 @@ void setup() {
   }
   Serial.print(" ✓ IP="); Serial.println(WiFi.localIP());
 
-  // init VL53L1X
+  // Make sure sensor is out of reset if XSHUT is wired
+#ifdef TOF_XSHUT
+  pinMode(TOF_XSHUT, OUTPUT);
+  digitalWrite(TOF_XSHUT, HIGH);
+  delay(5);
+#endif
+
+  // init VL53L1X (Adafruit driver)
   if (!tofFinish.begin()) {
     Serial.println("❌ VL53L1X not found");
     while (1) delay(10);
   }
   // Configure sensor for close-range, stable readings
-  // Use ST-style method exposed by Adafruit wrapper where available
-  (void)tofFinish.VL53L1X_SetDistanceMode(1); // 1 = SHORT, ignore return if not supported
+  // Leave distance mode at library default; just set a moderate timing budget
   tofFinish.setTimingBudget(TIMING_BUDGET_MS);
-  tofFinish.startRanging();  // ← replaces startContinuous()
+  tofFinish.startRanging();
   Serial.println("✅ VL53L1X ranging");
   Serial.print("Thresholds: ON≤"); Serial.print(FINISH_ON_MM);
   Serial.print("mm, OFF>"); Serial.print(FINISH_OFF_MM);
@@ -101,11 +112,10 @@ void setup() {
 void loop() {
   // Sample sensor independently of HTTP polling
   static uint32_t lastLogMs = 0;
-  uint8_t ready = 0;
-  // Prefer ST-style calls to avoid stale/invalid reads
-  if (tofFinish.VL53L1X_CheckForDataReady(&ready) == 0 && ready) {
-    uint16_t mm = 0;
-    if (tofFinish.VL53L1X_GetDistance(&mm) == 0) {
+  // Use Adafruit API consistently
+  if (tofFinish.dataReady()) {
+    uint16_t mm = tofFinish.distance();
+    tofFinish.clearInterrupt();
       // Treat 0 mm as "very close" (some boards report 0 when target is on the window)
       bool nearZero = (mm == 0);
       // Filter obviously invalid values only
@@ -124,8 +134,6 @@ void loop() {
           finished = false;
         }
       }
-    }
-    tofFinish.VL53L1X_ClearInterrupt();
 
     if (millis() - lastLogMs > 500) {
       lastLogMs = millis();

@@ -79,6 +79,7 @@ void setup() {
 
   // I2C on GPIO4/5
   Wire.begin(SDA_PIN, SCL_PIN);
+  Wire.setClock(400000);
   Serial.printf("✅ I2C on SDA=GPIO%d, SCL=GPIO%d\n",
                 SDA_PIN, SCL_PIN);
 
@@ -103,6 +104,11 @@ void setup() {
   }
 
   // Initialize VL53L1X
+  #ifdef TOF_XSHUT_PIN
+    pinMode(TOF_XSHUT_PIN, OUTPUT);
+    digitalWrite(TOF_XSHUT_PIN, HIGH);
+    delay(5);
+  #endif
   Serial.print("⏳ Initializing VL53L1X…");
   if (!tof.begin()) {
     Serial.println(" ❌ not found, /status will return errors");
