@@ -102,10 +102,6 @@ npx expo start -c
 - Test thoroughly on hardware before submitting
 - Update documentation for new features
 
-##  License
-
-This project is licensed under the 0BSD License - see the [LICENSE](LICENSE) file for details.
-
 ##  Acknowledgments
 
 - [I2Cdevlib](https://github.com/jrowberg/i2cdevlib) for MPU6050 library
