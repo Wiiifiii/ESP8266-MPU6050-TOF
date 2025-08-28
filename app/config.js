@@ -3,12 +3,12 @@
 export const USE_DEMO = false; // real hardware
 
 // Indoor-friendly defaults
-export const NEAR_THRESHOLD_MM  = 120; // Drive screen
-export const READY_THRESHOLD_MM = 60;  // Ready screen (≈ 6 cm)
+export const NEAR_THRESHOLD_MM = 120; // Drive screen
+export const READY_THRESHOLD_MM = 60; // Ready screen (≈ 6 cm)
 
 // Telemetry options
-export const SHOW_DEBUG = false;         // hide debug UI for demo
-export const ACCEL_UNITS = 'g';          // 'g' if firmware sends ax/ay in g; 'mps2' if already m/s^2
+export const SHOW_DEBUG = false; // hide debug UI for demo
+export const ACCEL_UNITS = 'g'; // 'g' if firmware sends ax/ay in g; 'mps2' if already m/s^2
 export const G = 9.80665;
 export const ACCEL_SCALE = ACCEL_UNITS === 'g' ? G : 1;
 

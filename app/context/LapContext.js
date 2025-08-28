@@ -9,8 +9,8 @@ export function LapProvider({ children }) {
 
   // One-lap runtime state
   const [startTime, setStartTime] = useState(null); // ms epoch
-  const [endTime, setEndTime] = useState(null);     // ms epoch
-  const [readings, setReadings] = useState([]);     // [{t,speed,ax,ay,az,distance}]
+  const [endTime, setEndTime] = useState(null); // ms epoch
+  const [readings, setReadings] = useState([]); // [{t,speed,ax,ay,az,distance}]
 
   // Computed/summary + history
   const [lastSummary, setLastSummary] = useState(null);
@@ -23,22 +23,31 @@ export function LapProvider({ children }) {
     setLastSummary(null);
   }
 
-  const value = useMemo(() => ({
-    // config
-    trackDistance, setTrackDistance,
+  const value = useMemo(
+    () => ({
+      // config
+      trackDistance,
+      setTrackDistance,
 
-    // runtime
-    startTime, setStartTime,
-    endTime, setEndTime,
-    readings, setReadings,
+      // runtime
+      startTime,
+      setStartTime,
+      endTime,
+      setEndTime,
+      readings,
+      setReadings,
 
-    // summaries
-    lastSummary, setLastSummary,
-    lapHistory, setLapHistory,
+      // summaries
+      lastSummary,
+      setLastSummary,
+      lapHistory,
+      setLapHistory,
 
-    // helpers
-    resetLap,
-  }), [trackDistance, startTime, endTime, readings, lastSummary, lapHistory]);
+      // helpers
+      resetLap,
+    }),
+    [trackDistance, startTime, endTime, readings, lastSummary, lapHistory]
+  );
 
   return <LapContext.Provider value={value}>{children}</LapContext.Provider>;
 }

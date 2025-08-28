@@ -1,3 +1,8 @@
+/**
+ * Module: app/state/lapStore.ts
+ * Purpose: Simple in-memory lap store used by Finished screen's History.
+ * Notes: Keeps last 10 laps; pins best lap (lowest time). No persistence.
+ */
 export type Lap = {
   id: string;
   startedAt: number;
@@ -12,7 +17,9 @@ let _current: Lap | null = null;
 type Listener = () => void;
 const _listeners: Listener[] = [];
 
-function notify() { _listeners.forEach(l => l()); }
+function notify() {
+  _listeners.forEach((l) => l());
+}
 
 export const lapStore = {
   // Start a fresh lap in-memory (optional helper)
@@ -23,7 +30,7 @@ export const lapStore = {
 
   // Close and push a lap; idempotent if same id already closed
   closeAndPush(lap: Lap) {
-    const idx = _laps.findIndex(x => x.id === lap.id);
+    const idx = _laps.findIndex((x) => x.id === lap.id);
     if (idx >= 0) {
       if (_laps[idx].endedAt) return; // already closed
       _laps[idx] = lap;
@@ -34,21 +41,29 @@ export const lapStore = {
     notify();
   },
 
-  get currentLap() { return _current; },
-  getAll(): Lap[] { return _laps.slice(); },
+  get currentLap() {
+    return _current;
+  },
+  getAll(): Lap[] {
+    return _laps.slice();
+  },
 
   // Selectors
   getBestLap(): Lap | undefined {
     if (_laps.length === 0) return undefined;
-    return _laps.reduce((best: Lap | undefined, cur) => {
-      if (!best) return cur;
-      if (cur.timeMs < best.timeMs) return cur;
-      if (cur.timeMs === best.timeMs) {
-        const bi = _laps.indexOf(best), ci = _laps.indexOf(cur);
-        return ci < bi ? cur : best; // prefer newer on tie
-      }
-      return best;
-    }, undefined as Lap | undefined);
+    return _laps.reduce(
+      (best: Lap | undefined, cur) => {
+        if (!best) return cur;
+        if (cur.timeMs < best.timeMs) return cur;
+        if (cur.timeMs === best.timeMs) {
+          const bi = _laps.indexOf(best),
+            ci = _laps.indexOf(cur);
+          return ci < bi ? cur : best; // prefer newer on tie
+        }
+        return best;
+      },
+      undefined as Lap | undefined
+    );
   },
 
   getRecent(limit = 10): Lap[] {

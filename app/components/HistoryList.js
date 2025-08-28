@@ -1,3 +1,7 @@
+/**
+ * Module: app/components/HistoryList.js
+ * Purpose: Render a simple list of lap summaries for history.
+ */
 // components/HistoryList.js
 import React from 'react';
 import { View, Text } from 'react-native';
@@ -28,15 +32,13 @@ export default function HistoryList({ items = [] }) {
               {index === 0 ? '★ ' : ''}Lap {index + 1}
             </Text>
             {item.when && (
-              <Text style={{ color: '#999' }}>
-                {new Date(item.when).toLocaleTimeString()}
-              </Text>
+              <Text style={{ color: '#999' }}>{new Date(item.when).toLocaleTimeString()}</Text>
             )}
           </View>
           <Row label="Travel time" value={fmtTime(item.elapsedMs)} />
-          <Row label="Top speed"   value={fmtSpeed(item.topSpeed)} />
-          <Row label="Max accel"   value={fmtAccel(item.maxAccel)} />
-          <Row label="Avg speed"   value={fmtSpeed(item.avgSpeed)} />
+          <Row label="Top speed" value={fmtSpeed(item.topSpeed)} />
+          <Row label="Max accel" value={fmtAccel(item.maxAccel)} />
+          <Row label="Avg speed" value={fmtSpeed(item.avgSpeed)} />
         </View>
       ))}
     </View>

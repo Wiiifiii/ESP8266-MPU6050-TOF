@@ -1,3 +1,8 @@
+// NOTE: Currently not used in demo build; kept for future features.
+/**
+ * Module: app/api.demo.js
+ * Purpose: Mock endpoints for offline testing. Not used when USE_DEMO=false.
+ */
 let demoStartedAt = 0;
 
 // call this when the run begins
@@ -5,23 +10,34 @@ export function startDemoRun() {
   demoStartedAt = Date.now();
 }
 
+/** @returns {Promise<{data:{ax:number,ay:number,az:number,speed:number,distance:number}}>} */
 export async function getCar() {
   // simulate ~3.24 m/s avg, small noise, and accel spikes
   const t = (Date.now() - demoStartedAt) / 1000;
-  const speed = 3.2 + Math.sin(t * 2) * 0.6;      // m/s
-  const ax = 0.3 + Math.sin(t * 5) * 0.2;         // m/s^2 (approx)
-  const ay = 0.05, az = 9.81;                      // gravity mostly on z
-  const distance = Math.max(0, speed * t);         // crude integration
+  const speed = 3.2 + Math.sin(t * 2) * 0.6; // m/s
+  const ax = 0.3 + Math.sin(t * 5) * 0.2; // m/s^2 (approx)
+  const ay = 0.05,
+    az = 9.81; // gravity mostly on z
+  const distance = Math.max(0, speed * t); // crude integration
   return { data: { ax, ay, az, speed, distance } };
 }
 
+/** @returns {Promise<{data:{distanceMm:number,ready:boolean,triggered:boolean,elapsedMs:number}}>} */
 export async function getStart() {
   // always close enough & ready in demo
-  return { data: { distanceMm: 35, ready: true, triggered: false, elapsedMs: demoStartedAt ? Date.now() - demoStartedAt : 0 } };
+  return {
+    data: {
+      distanceMm: 35,
+      ready: true,
+      triggered: false,
+      elapsedMs: demoStartedAt ? Date.now() - demoStartedAt : 0,
+    },
+  };
 }
 
+/** @returns {Promise<{data:{distance:number,finished:boolean}}>} */
 export async function getFinish() {
-  const finished = demoStartedAt && (Date.now() - demoStartedAt >= 2450); // ~2.45s
+  const finished = demoStartedAt && Date.now() - demoStartedAt >= 2450; // ~2.45s
   return { data: { distance: 60, finished } };
 }
 

@@ -1,3 +1,7 @@
+/**
+ * Module: app/screens/DistanceScreen.js
+ * Purpose: Capture track distance (m) for metrics and UI context.
+ */
 // screens/DistanceScreen.js
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
@@ -12,16 +16,26 @@ export default function DistanceScreen({ navigation }) {
   const isValid = Number.isFinite(parsed) && parsed > 0 && parsed <= 1000; // 1m..1000m
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={{ flex: 1 }}
+    >
       <StepperHeader stepIndex={0} />
       <View style={{ padding: 20, gap: 16 }}>
         <Text style={{ fontSize: 24, fontWeight: '700' }}>Track Distance</Text>
         <Text style={{ color: '#666' }}>Enter the distance between Start and Finish (meters).</Text>
 
-        <View style={{
-          borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 14,
-          flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'
-        }}>
+        <View
+          style={{
+            borderWidth: 1,
+            borderColor: '#ddd',
+            borderRadius: 12,
+            padding: 14,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <TextInput
             value={val}
             onChangeText={setVal}
@@ -49,7 +63,7 @@ export default function DistanceScreen({ navigation }) {
             opacity: pressed ? 0.8 : 1,
             paddingVertical: 14,
             borderRadius: 12,
-            alignItems: 'center'
+            alignItems: 'center',
           })}
         >
           <Text style={{ color: 'white', fontSize: 18, fontWeight: '700' }}>Next</Text>

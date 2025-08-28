@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { lapStore, type Lap } from "../state/lapStore";
+import { useEffect, useState } from 'react';
+import { lapStore, type Lap } from '../state/lapStore';
 
 export function useLaps() {
   const [laps, setLaps] = useState(lapStore.getAll() as Lap[]);

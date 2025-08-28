@@ -11,13 +11,13 @@
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
-},
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.wiiifiii.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSAppTransportSecurity": {           
+        "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
         }
       }
@@ -29,7 +29,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.wiiifiii.app",
-      "usesCleartextTraffic": true         
+      "usesCleartextTraffic": true
     },
     "web": {
       "favicon": "./assets/favicon.png"

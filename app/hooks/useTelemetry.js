@@ -1,7 +1,18 @@
+/**
+ * Module: app/hooks/useTelemetry.js
+ * Purpose: Polls Car/Start/Finish; stamps lastSeen; auto-discovers endpoints on repeated failures.
+ */
 // app/hooks/useTelemetry.js
 import { useEffect, useRef, useState } from 'react';
 import { useStopwatch } from './useStopwatch';
-import api, { getCar, getStart, getFinish, discoverUnits, getStartBase, getFinishBase } from '../api';
+import api, {
+  getCar,
+  getStart,
+  getFinish,
+  discoverUnits,
+  getStartBase,
+  getFinishBase,
+} from '../api';
 
 async function getJSON(url, timeout = 1500) {
   const ctrl = new AbortController();
@@ -17,6 +28,12 @@ async function getJSON(url, timeout = 1500) {
   }
 }
 
+/**
+ * Hook: Telemetry poller.
+ * @param {object} [endpoints] unused; API getters are used for bases.
+ * @param {boolean} running keep elapsed time ticking
+ * @returns {{elapsedMs:number, car:any, start:any, finish:any, finishEdge?:boolean, lastSeen:Record<string,number>}}
+ */
 export function useTelemetry(endpoints, running) {
   const elapsedMs = useStopwatch(running, 0);
   const [car, setCar] = useState({});
@@ -36,7 +53,7 @@ export function useTelemetry(endpoints, running) {
         if (alive && r?.data) {
           setFinish(r.data);
           const ts = Date.now();
-          setLastSeen(ls => ({ ...ls, finish: ts }));
+          setLastSeen((ls) => ({ ...ls, finish: ts }));
           fail.current.finish = 0;
         }
       } catch {
@@ -49,7 +66,7 @@ export function useTelemetry(endpoints, running) {
         if (alive && r?.data) {
           setStart(r.data);
           const ts = Date.now();
-          setLastSeen(ls => ({ ...ls, start: ts }));
+          setLastSeen((ls) => ({ ...ls, start: ts }));
           fail.current.start = 0;
         }
       } catch {
@@ -62,7 +79,7 @@ export function useTelemetry(endpoints, running) {
         if (alive && r?.data) {
           setCar(r.data);
           const ts = Date.now();
-          setLastSeen(ls => ({ ...ls, car: ts }));
+          setLastSeen((ls) => ({ ...ls, car: ts }));
           fail.current.car = 0;
         }
       } catch {
@@ -70,22 +87,31 @@ export function useTelemetry(endpoints, running) {
       }
 
       // Auto-recovery: if Start or Finish fails repeatedly, try discovery once
-      const needRecover = (fail.current.start >= 8) || (fail.current.finish >= 8);
+      const needRecover = fail.current.start >= 8 || fail.current.finish >= 8;
       if (needRecover && !recovering.current) {
         recovering.current = true;
-        try { await discoverUnits(); } catch {}
-        fail.current.start = 0; fail.current.finish = 0;
-        setTimeout(() => { recovering.current = false; }, 1000);
+        try {
+          await discoverUnits();
+        } catch {}
+        fail.current.start = 0;
+        fail.current.finish = 0;
+        setTimeout(() => {
+          recovering.current = false;
+        }, 1000);
       }
 
       if (alive) setTimeout(tick, 250);
     };
     tick();
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [running]);
 
   const finishEdge = finish.finished === true && !prevFinished.current;
-  useEffect(() => { prevFinished.current = finish.finished === true; }, [finish.finished]);
+  useEffect(() => {
+    prevFinished.current = finish.finished === true;
+  }, [finish.finished]);
 
   return { elapsedMs, car, start, finish, finishEdge, lastSeen };
 }
