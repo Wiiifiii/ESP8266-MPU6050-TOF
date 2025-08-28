@@ -1,3 +1,15 @@
+/**
+ * Project: ESP8266-MPU6050-TOF
+ * File: StartUnit/main.cpp
+ * Role: START unit firmware
+ * Summary:
+ *  - CAR: computes gravity-removed accel and speed; exposes /data; supports Auto-set Forward.
+ *  - START: ToF distance; exposes /status {distanceMm, ready}.
+ *  - FINISH: ToF distance with hysteresis; exposes /status {distanceMm, finished}; auto-recover.
+ * Notes:
+ *  - Wi-Fi fixed IPs: Car .1 (AP), Start .2, Finish .3
+ *  - Keep behavior stable for demo; comments only.
+ */
 // StartUnit/main.cpp
 
 #include <Wire.h>
@@ -26,7 +38,9 @@ uint8_t              medIdx  = 0;
 bool                 medFull = false;
 
 // — Thresholds (in mm) —
-constexpr uint16_t READY_MM   = 120;  // ≤120 mm → “ready” (manual start alignment)
+// READY_MM defines when the car is considered "ready" near the start sensor.
+// Keep generous to allow manual line-up; app uses this to enable the Start button.
+constexpr uint16_t READY_MM   = 120;  // ≤120 mm → “ready”
 
 // — Run state —
 bool     ready     = false;
@@ -116,7 +130,7 @@ void setup() {
     Serial.println(" ✅ OK");
     delay(50); yield();
 
-    // Use a stable timing budget; distance mode left at library default if not available
+  // Use a stable timing budget (ms). Larger → smoother but slower; smaller → faster updates.
     tof.setTimingBudget(50); // milliseconds
     Serial.print("⏳ Starting continuous mode…");
     tof.startRanging();  // ~30 Hz by default
@@ -138,7 +152,8 @@ void loop() {
     addSample(raw);
 
     uint16_t filt = getMedian();
-    ready = (filt > 0 && filt <= READY_MM);
+  // Consider 0 as "not ready" here (very far or invalid). Ready when within threshold.
+  ready = (filt > 0 && filt <= READY_MM);
     // Optional: lightweight debug every ~200ms when ready changes
     static bool prevReady = false;
     if (prevReady != ready) {

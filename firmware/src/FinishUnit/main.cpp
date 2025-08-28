@@ -1,3 +1,15 @@
+/**
+ * Project: ESP8266-MPU6050-TOF
+ * File: FinishUnit/main.cpp
+ * Role: FINISH unit firmware
+ * Summary:
+ *  - CAR: computes gravity-removed accel and speed; exposes /data; supports Auto-set Forward.
+ *  - START: ToF distance; exposes /status {distanceMm, ready}.
+ *  - FINISH: ToF distance with hysteresis; exposes /status {distanceMm, finished}; auto-recover.
+ * Notes:
+ *  - Wi-Fi fixed IPs: Car .1 (AP), Start .2, Finish .3
+ *  - Keep behavior stable for demo; comments only.
+ */
 // FinishUnit/main.cpp
 
 #include <Wire.h>
@@ -8,6 +20,7 @@
 
 
 // Thresholds (allow overrides via -DFINISH_ON_MM=... -DFINISH_OFF_MM=...)
+// Hysteresis: finished becomes true when distance ≤ FINISH_ON_MM (or near-zero); clears when > FINISH_OFF_MM.
 #ifndef FINISH_ON_MM
 #define FINISH_ON_MM 50
 #endif
@@ -130,7 +143,7 @@ void loop() {
         samples++;
         lastSampleMs = millis();
 
-        // Hysteresis: 0 mm or <= ON → finished; > OFF → clear
+        // Hysteresis: 0 mm or <= ON → finished; > OFF → clear (prevents chattering)
         if (!finished && (nearZero || dist_mm <= FINISH_ON_MM)) {
           finished = true;
           Serial.println("🏁 Finish TRUE");
@@ -149,6 +162,7 @@ void loop() {
   // Keep ranging alive if stale
   const uint32_t now = millis();
   if (now - lastSampleMs > 1500) {
+  // Re-kick ranging if no samples for a while (sensor hiccup recovery)
     tofFinish.stopRanging();
     delay(5);
     tofFinish.startRanging();

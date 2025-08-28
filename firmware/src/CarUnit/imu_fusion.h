@@ -1,3 +1,16 @@
+/**
+ * Project: ESP8266-MPU6050-TOF
+ * File: CarUnit/imu_fusion.h
+ * Role: CAR unit firmware (IMU fusion interface)
+ * Summary:
+ *  - Gravity removal: subtract gravity estimated from pitch/roll before integrating.
+ *  - LPF: low-pass filter linear acceleration to reduce noise.
+ *  - ZUPT: zero-velocity update when both accel and gyro indicate stillness.
+ *  - Forward-axis learn: pick body axis and sign that best matches forward accel.
+ * Notes:
+ *  - Tunables chosen for stability over absolute accuracy.
+ *  - Behavior preserved; comments only.
+ */
 #pragma once
 #include <Arduino.h>
 

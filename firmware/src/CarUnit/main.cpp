@@ -1,3 +1,15 @@
+/**
+ * Project: ESP8266-MPU6050-TOF
+ * File: CarUnit/main.cpp
+ * Role: CAR unit firmware
+ * Summary:
+ *  - CAR: computes gravity-removed accel and speed; exposes /data; supports Auto-set Forward.
+ *  - START: ToF distance; exposes /status {distanceMm, ready}.
+ *  - FINISH: ToF distance with hysteresis; exposes /status {distanceMm, finished}; auto-recover.
+ * Notes:
+ *  - Wi-Fi fixed IPs: Car .1 (AP), Start .2, Finish .3
+ *  - Keep behavior stable for demo; comments only.
+ */
 //CarUnit main.cpp
 #include <Wire.h>
 #include <ESP8266WiFi.h>
