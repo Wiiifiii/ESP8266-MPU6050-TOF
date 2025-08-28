@@ -1,11 +1,5 @@
-/**
- * Project: ESP8266-MPU6050-TOF
- * Module/File: app/utils/metrics.js
- * Purpose: Module
- * Notes: Auto-generated header; behavior unchanged.
- */
+// Module/File: app/utils/metrics.js
 
-// app/utils/metrics.js
 export function computeMetrics({ readings, trackDistance, startTime, endTime }) {
   const elapsedMs = Math.max(0, (endTime ?? Date.now()) - (startTime ?? Date.now()));
   const speeds = readings.map((r) => r.speed).filter(Number.isFinite);

@@ -1,5 +1,4 @@
 /**
- * Project: ESP8266-MPU6050-TOF
  * File: CarUnit/imu_fusion.h
  * Role: CAR unit firmware (IMU fusion interface)
  * Summary:

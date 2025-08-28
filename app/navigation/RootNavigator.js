@@ -1,9 +1,4 @@
-/**
- * Project: ESP8266-MPU6050-TOF
- * Module/File: app/navigation/RootNavigator.js
- * Purpose: Module
- * Notes: Auto-generated header; behavior unchanged.
- */
+// Module/File: app/navigation/RootNavigator.js
 
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';

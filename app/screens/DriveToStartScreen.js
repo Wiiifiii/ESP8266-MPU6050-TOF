@@ -1,15 +1,7 @@
 /**
- * Project: ESP8266-MPU6050-TOF
- * Module/File: app/screens/DriveToStartScreen.js
- * Purpose: App screen (React Native)
- * Notes: Auto-generated header; behavior unchanged.
- */
-
-/**
  * Module: app/screens/DriveToStartScreen.js
  * Purpose: Guide user to move car into near zone for the Start sensor.
  */
-// screens/DriveToStartScreen.js
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import StepperHeader from '../components/StepperHeader';

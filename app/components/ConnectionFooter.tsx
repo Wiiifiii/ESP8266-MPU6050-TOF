@@ -1,11 +1,4 @@
 /**
- * Project: ESP8266-MPU6050-TOF
- * Module/File: app/components/ConnectionFooter.tsx
- * Purpose: UI component
- * Notes: Auto-generated header; behavior unchanged.
- */
-
-/**
  * Module: app/components/ConnectionFooter.tsx
  * Purpose: Optional footer for live connectivity; controlled by SHOW_CONNECTION_FOOTER.
  */

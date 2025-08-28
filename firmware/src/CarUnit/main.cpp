@@ -1,16 +1,12 @@
 /**
- * Project: ESP8266-MPU6050-TOF
  * File: CarUnit/main.cpp
- * Role: CAR unit firmware
  * Summary:
  *  - CAR: computes gravity-removed accel and speed; exposes /data; supports Auto-set Forward.
  *  - START: ToF distance; exposes /status {distanceMm, ready}.
  *  - FINISH: ToF distance with hysteresis; exposes /status {distanceMm, finished}; auto-recover.
  * Notes:
  *  - Wi-Fi fixed IPs: Car .1 (AP), Start .2, Finish .3
- *  - Keep behavior stable for demo; comments only.
  */
-//CarUnit main.cpp
 #include <Wire.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
@@ -51,11 +47,11 @@ void setup() {
   Serial.begin(115200);
   delay(100);
   Serial.println();
-  Serial.println("⏳ CarUnit Booting...");
+  Serial.println("CarUnit Booting...");
 
   // Initialize I2C bus
   Wire.begin(4, 5);
-  Serial.println("✅ I2C on SDA=GPIO4, SCL=GPIO5");
+  Serial.println("I2C on SDA=GPIO4, SCL=GPIO5");
 
   // Initialize IMU fusion
   imu.begin();
@@ -72,9 +68,8 @@ void setup() {
   server.on("/learn_forward/stop",  HTTP_GET, [](){ bool ok = imu.endLearnForward(); server.send(200, "application/json", String("{\"ok\":" ) + (ok?"true":"false") + "}"); });
   server.on("/whoami", HTTP_GET, [](){ server.send(200, "application/json", "{\"role\":\"CAR\"}"); });
   server.begin();
-  Serial.println("✔ CarUnit HTTP server up");
+  Serial.println("CarUnit HTTP server up");
 
-  // nothing else
 }
 
 void loop() {

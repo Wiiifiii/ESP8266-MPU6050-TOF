@@ -1,23 +1,16 @@
 /**
- * Project: ESP8266-MPU6050-TOF
  * File: FinishUnit/main.cpp
- * Role: FINISH unit firmware
  * Summary:
  *  - CAR: computes gravity-removed accel and speed; exposes /data; supports Auto-set Forward.
  *  - START: ToF distance; exposes /status {distanceMm, ready}.
  *  - FINISH: ToF distance with hysteresis; exposes /status {distanceMm, finished}; auto-recover.
  * Notes:
  *  - Wi-Fi fixed IPs: Car .1 (AP), Start .2, Finish .3
- *  - Keep behavior stable for demo; comments only.
  */
-// FinishUnit/main.cpp
-
 #include <Wire.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <Adafruit_VL53L1X.h>
-
-
 
 // Thresholds (allow overrides via -DFINISH_ON_MM=... -DFINISH_OFF_MM=...)
 // Hysteresis: finished becomes true when distance ≤ FINISH_ON_MM (or near-zero); clears when > FINISH_OFF_MM.
@@ -76,12 +69,12 @@ void handleWhoAmI() { serverFinish.send(200, "application/json", "{\"role\":\"FI
 
 void setup() {
   Serial.begin(115200);
-  Serial.println("\n⏳ FinishUnit Booting...");
+  Serial.println("\n FinishUnit Booting...");
 
   // I2C on SDA=GPIO4, SCL=GPIO5
   Wire.begin(SDA_PIN, SCL_PIN);
   Wire.setClock(400000); // Fast-mode I2C for stability
-  Serial.printf("✅ I2C on SDA=GPIO%d, SCL=GPIO%d\n", SDA_PIN, SCL_PIN);
+  Serial.printf(" I2C on SDA=GPIO%d, SCL=GPIO%d\n", SDA_PIN, SCL_PIN);
 
   // Join the RaceTimerNet AP
   WiFi.mode(WIFI_STA);
@@ -90,7 +83,7 @@ void setup() {
   WiFi.setSleep(false);
   WiFi.setAutoReconnect(true);
   WiFi.persistent(true);
-  Serial.print("📶 FinishUnit joining");
+  Serial.print("FinishUnit joining");
   while (WiFi.status() != WL_CONNECTED) {
     delay(200);
     Serial.print('.');
@@ -106,14 +99,14 @@ void setup() {
 
   // init VL53L1X (Adafruit driver)
   if (!tofFinish.begin()) {
-    Serial.println("❌ VL53L1X not found");
+    Serial.println("VL53L1X not found");
     while (1) delay(10);
   }
   // Configure sensor for close-range, stable readings
   // Leave distance mode at library default; just set a moderate timing budget
   tofFinish.setTimingBudget(TIMING_BUDGET_MS);
   tofFinish.startRanging();
-  Serial.println("✅ VL53L1X ranging");
+  Serial.println(" VL53L1X ranging");
   Serial.print("Thresholds: ON≤"); Serial.print(FINISH_ON_MM);
   Serial.print("mm, OFF>"); Serial.print(FINISH_OFF_MM);
   Serial.print("mm, Budget="); Serial.print(TIMING_BUDGET_MS);
@@ -123,7 +116,7 @@ void setup() {
   serverFinish.on("/status", HTTP_GET, handleStatusFinish);
   serverFinish.on("/whoami", HTTP_GET, handleWhoAmI);
   serverFinish.begin();
-  Serial.println("✔ FinishUnit HTTP up");
+  Serial.println("FinishUnit HTTP up");
 }
 
 void loop() {

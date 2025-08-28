@@ -1,11 +1,5 @@
-/**
- * Project: ESP8266-MPU6050-TOF
- * Module/File: app/utils/format.js
- * Purpose: Module
- * Notes: Auto-generated header; behavior unchanged.
- */
+// Module/File: app/utils/format.js
 
-// app/utils/format.js
 export function fmtTime(ms) {
   const s = ms / 1000;
   const whole = Math.floor(s);

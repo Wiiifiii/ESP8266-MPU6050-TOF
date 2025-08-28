@@ -1,15 +1,7 @@
 /**
- * Project: ESP8266-MPU6050-TOF
- * Module/File: app/screens/DistanceScreen.js
- * Purpose: App screen (React Native)
- * Notes: Auto-generated header; behavior unchanged.
- */
-
-/**
  * Module: app/screens/DistanceScreen.js
  * Purpose: Capture track distance (m) for metrics and UI context.
  */
-// screens/DistanceScreen.js
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLap } from '../context/LapContext';

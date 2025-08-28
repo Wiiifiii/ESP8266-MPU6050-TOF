@@ -1,15 +1,7 @@
 /**
- * Project: ESP8266-MPU6050-TOF
- * Module/File: app/screens/ConnectScreen.js
- * Purpose: App screen (React Native)
- * Notes: Auto-generated header; behavior unchanged.
- */
-
-/**
  * Module: app/screens/ConnectScreen.js
  * Purpose: First connectivity gate; checks Car/AP, Start, and Finish reachability; discovers bases.
  */
-// screens/ConnectScreen.js
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, Linking } from 'react-native';
 import StepperHeader from '../components/StepperHeader';
@@ -72,7 +64,7 @@ export default function ConnectScreen({ navigation }) {
   useEffect(() => {
     let mounted = true;
 
-    // Ensure default FINISH_BASE is correct at app start if stale
+    // Ip address are set as static ip but just in case i keep this if it fails
     try {
       if (getFinishBase() !== 'http://192.168.4.3') setFinishBase('http://192.168.4.3');
     } catch {}

@@ -1,12 +1,4 @@
 /**
- * Project: ESP8266-MPU6050-TOF
- * Module/File: app/api.js
- * Purpose: HTTP API client (real/demo, discovery)
- * Notes: Auto-generated header; behavior unchanged.
- */
-
-// app/api.js
-/**
  * Module: app/api.js
  * Purpose: Unified API facade that switches between demo and real hardware endpoints.
  * Notes: Not used when USE_DEMO=false? This file always mediates; demo wiring is in api.demo.js.
@@ -63,7 +55,7 @@ const real = {
 // Choose API by flag
 const api = USE_DEMO ? demo : real;
 
-// ✅ Make named exports respect the mode
+// Make named exports respect the mode
 export const {
   getCar,
   getStart,
@@ -85,7 +77,6 @@ export {
 
 export default api;
 
-// Optional: quick runtime breadcrumb
 // console.info('[API MODE]', USE_DEMO ? 'DEMO' : 'REAL', { START_BASE, FINISH_BASE });
 
 // Forward-axis learning endpoints (always use Car IP)
@@ -94,8 +85,7 @@ export const startLearnForward = () =>
 export const stopLearnForward = () =>
   axios.get('http://192.168.4.1/learn_forward/stop', { timeout: 3000 });
 
-// Try simple discovery for Finish unit and set base when found
-// ---------- Role-safe discovery helpers ----------
+// simple discovery for Finish unit and set base when found
 const CANDIDATES = ['http://192.168.4.2', 'http://192.168.4.3'];
 
 async function whoAmI(base) {

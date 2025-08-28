@@ -1,11 +1,4 @@
 /**
- * Project: ESP8266-MPU6050-TOF
- * Module/File: app/api.real.js
- * Purpose: HTTP API client (real/demo, discovery)
- * Notes: Auto-generated header; behavior unchanged.
- */
-
-/**
  * Module: app/api.real.js
  * Purpose: Direct axios clients for Car, Start, and Finish hardware endpoints.
  */

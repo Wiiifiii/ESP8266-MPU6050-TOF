@@ -1,15 +1,7 @@
 /**
- * Project: ESP8266-MPU6050-TOF
- * Module/File: app/screens/FinishedScreen.js
- * Purpose: App screen (React Native)
- * Notes: Auto-generated header; behavior unchanged.
- */
-
-/**
  * Module: app/screens/FinishedScreen.js
  * Purpose: Show lap summary and recent history; allow new lap.
  */
-// screens/FinishedScreen.js
 import React, { useEffect } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import StepperHeader from '../components/StepperHeader';
@@ -38,11 +30,9 @@ export default function FinishedScreen({ navigation }) {
   useEffect(() => {
     if (!summary) return;
     if (!lastSummary) setLastSummary(summary);
-    // History append now occurs on the finish edge in RunningScreen.
   }, []);
 
   // HistoryPanel pins best lap and shows last 10 excluding best.
-
   return (
     <View style={{ flex: 1 }}>
       <StepperHeader stepIndex={5} />

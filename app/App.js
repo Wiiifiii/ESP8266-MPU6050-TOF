@@ -1,10 +1,3 @@
-/**
- * Project: ESP8266-MPU6050-TOF
- * Module/File: app/App.js
- * Purpose: Module
- * Notes: Auto-generated header; behavior unchanged.
- */
-
 // App.js
 import 'react-native-gesture-handler';
 import React, { useEffect } from 'react';
@@ -25,7 +18,6 @@ export default function App() {
           await discoverUnits();
           await ensureDistinctRoles();
         } catch (e) {
-          // swallow – UI/connection routines will still operate
         }
       }
     })();

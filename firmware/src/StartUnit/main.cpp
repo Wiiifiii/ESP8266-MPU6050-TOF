@@ -1,17 +1,12 @@
 /**
- * Project: ESP8266-MPU6050-TOF
  * File: StartUnit/main.cpp
- * Role: START unit firmware
  * Summary:
  *  - CAR: computes gravity-removed accel and speed; exposes /data; supports Auto-set Forward.
  *  - START: ToF distance; exposes /status {distanceMm, ready}.
  *  - FINISH: ToF distance with hysteresis; exposes /status {distanceMm, finished}; auto-recover.
  * Notes:
  *  - Wi-Fi fixed IPs: Car .1 (AP), Start .2, Finish .3
- *  - Keep behavior stable for demo; comments only.
  */
-// StartUnit/main.cpp
-
 #include <Wire.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
@@ -89,12 +84,12 @@ void handleStatus() {
 void setup() {
   Serial.begin(115200);
   yield();
-  Serial.println("\n⏳ StartUnit Booting...");
+  Serial.println("\n StartUnit Booting...");
 
   // I2C on GPIO4/5
   Wire.begin(SDA_PIN, SCL_PIN);
   Wire.setClock(400000);
-  Serial.printf("✅ I2C on SDA=GPIO%d, SCL=GPIO%d\n",
+  Serial.printf("I2C on SDA=GPIO%d, SCL=GPIO%d\n",
                 SDA_PIN, SCL_PIN);
 
   // Join RaceTimerNet as a station
@@ -104,7 +99,7 @@ void setup() {
   WiFi.setSleep(false);
   WiFi.setAutoReconnect(true);
   WiFi.persistent(true);
-  Serial.print("📶 Connecting to “"); Serial.print(SSID); Serial.print("”");
+  Serial.print("Connecting to “"); Serial.print(SSID); Serial.print("”");
   uint32_t t0 = millis();
   while (WiFi.status() != WL_CONNECTED && millis() - t0 < 10000) {
     delay(200);  // feeds the watchdog
@@ -114,7 +109,7 @@ void setup() {
   if (WiFi.status() == WL_CONNECTED) {
     Serial.print("✓ IP="); Serial.println(WiFi.localIP());
   } else {
-    Serial.println("❌ Wi-Fi failed, but continuing");
+    Serial.println("Wi-Fi failed, but continuing");
   }
 
   // Initialize VL53L1X
@@ -123,25 +118,25 @@ void setup() {
     digitalWrite(TOF_XSHUT_PIN, HIGH);
     delay(5);
   #endif
-  Serial.print("⏳ Initializing VL53L1X…");
+  Serial.print("Initializing VL53L1X…");
   if (!tof.begin()) {
-    Serial.println(" ❌ not found, /status will return errors");
+    Serial.println(" not found, /status will return errors");
   } else {
-    Serial.println(" ✅ OK");
+    Serial.println(" OK");
     delay(50); yield();
 
   // Use a stable timing budget (ms). Larger → smoother but slower; smaller → faster updates.
     tof.setTimingBudget(50); // milliseconds
-    Serial.print("⏳ Starting continuous mode…");
+    Serial.print("Starting continuous mode…");
     tof.startRanging();  // ~30 Hz by default
-    Serial.println(" ✅ OK");
+    Serial.println(" OK");
   }
 
   // Setup HTTP endpoint
   server.on("/status", HTTP_GET, handleStatus);
   server.on("/whoami", HTTP_GET, [](){ server.send(200, "application/json", "{\"role\":\"START\"}"); });
   server.begin();
-  Serial.println("✔ HTTP server up: GET /status");
+  Serial.println("HTTP server up: GET /status");
 }
 
 void loop() {

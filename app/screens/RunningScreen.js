@@ -1,16 +1,7 @@
 /**
- * Project: ESP8266-MPU6050-TOF
- * Module/File: app/screens/RunningScreen.js
- * Purpose: App screen (React Native)
- * Notes: Auto-generated header; behavior unchanged.
- */
-
-/**
  * Module: app/screens/RunningScreen.js
  * Purpose: Live telemetry and finish detection.
- * Notes: Ends lap on fresh rising edge from Finish; dwell fallback for table tests.
  */
-// screens/RunningScreen.js
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import StepperHeader from '../components/StepperHeader';

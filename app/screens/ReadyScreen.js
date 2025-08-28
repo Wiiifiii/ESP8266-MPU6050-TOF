@@ -1,16 +1,8 @@
 /**
- * Project: ESP8266-MPU6050-TOF
- * Module/File: app/screens/ReadyScreen.js
- * Purpose: App screen (React Native)
- * Notes: Auto-generated header; behavior unchanged.
- */
-
-/**
  * Module: app/screens/ReadyScreen.js
  * Purpose: Wait until Start sensor is within READY threshold; optional auto-start and Auto-set Forward.
  * Notes: Blocks when Finish is too close to avoid false start.
  */
-// screens/ReadyScreen.js
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import StepperHeader from '../components/StepperHeader';

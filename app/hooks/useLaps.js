@@ -1,15 +1,17 @@
 /**
- * Project: ESP8266-MPU6050-TOF
- * Module/File: app/hooks/useLaps.ts
+ * Module/File: app/hooks/useLaps.js
  * Purpose: App hook (polling/stopwatch/telemetry)
- * Notes: Auto-generated header; behavior unchanged.
  */
 
 import { useEffect, useState } from 'react';
-import { lapStore, type Lap } from '../state/lapStore';
+import { lapStore } from '../state/lapStore';
 
+/**
+ * Subscribe to lapStore changes and return current laps array.
+ * @returns {import('../state/lapStore').Lap[]}
+ */
 export function useLaps() {
-  const [laps, setLaps] = useState(lapStore.getAll() as Lap[]);
+  const [laps, setLaps] = useState(lapStore.getAll());
   useEffect(() => {
     const unsub = lapStore.subscribe(() => setLaps(lapStore.getAll()));
     return unsub;

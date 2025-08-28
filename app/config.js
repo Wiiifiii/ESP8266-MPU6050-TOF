@@ -1,11 +1,5 @@
-/**
- * Project: ESP8266-MPU6050-TOF
- * Module/File: app/config.js
- * Purpose: Module
- * Notes: Auto-generated header; behavior unchanged.
- */
-
 // app/config.js
+
 // export const USE_DEMO = true; // set to false on real hardware
 export const USE_DEMO = false; // real hardware
 
@@ -19,16 +13,15 @@ export const ACCEL_UNITS = 'g'; // 'g' if firmware sends ax/ay in g; 'mps2' if a
 export const G = 9.80665;
 export const ACCEL_SCALE = ACCEL_UNITS === 'g' ? G : 1;
 
-// NEW: manual start preference (keep false for button-only start)
+// manual start preference (keep false for button-only start)
 export const AUTO_START_ON_READY = false;
 
-// NEW: show/hide the connection footer
+// show/hide the connection footer
 export const SHOW_CONNECTION_FOOTER = true; // show by default; flip to false to hide
 
-// NEW: discover units on app boot
+// discover units on app boot
 export const DISCOVER_UNITS_ON_BOOT = true;
 
 // Ready gate (Finish too close) — OFF by default for indoor table tests.
-// If you want to require being exactly on the line later, set to true and use ~40 mm.
 export const BLOCK_WHEN_FINISH_TOO_CLOSE = false;
 export const FINISH_TOO_CLOSE_UI_MM = 40;

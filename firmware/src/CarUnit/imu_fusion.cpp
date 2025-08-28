@@ -1,8 +1,6 @@
 /*
- * Project: ESP8266-MPU6050-TOF
  * Module/File: firmware/src/CarUnit/imu_fusion.cpp
  * Purpose: CAR unit firmware (IMU → accel/speed, /data)
- * Notes: Auto-generated header; behavior unchanged.
  */
 
 #include "imu_fusion.h"
@@ -36,19 +34,6 @@
 #endif
 
 void ImuFusion::begin() {
-  /**
-   * Project: ESP8266-MPU6050-TOF
-   * File: CarUnit/imu_fusion.cpp
-   * Role: CAR unit firmware (IMU fusion implementation)
-   * Summary:
-   *  - Complementary filter fuses gyro with accel-derived tilt to estimate pitch/roll.
-   *  - Gravity removal: subtract g-components in body frame before integrating accel.
-   *  - LPF smooths linear acceleration; spike clamp avoids outliers.
-   *  - ZUPT zeroes speed when still (small accel and gyro).
-   *  - Forward-axis learn: averages motion to choose which axis is forward and its sign.
-   * Notes:
-   *  - Behavior unchanged; only comments and minor documentation.
-   */
   // Assuming bus already begun in main; start if not
   Wire.begin(4, 5);
   delay(50);
