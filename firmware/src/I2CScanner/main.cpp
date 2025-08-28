@@ -1,3 +1,10 @@
+/*
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: firmware/src/I2CScanner/main.cpp
+ * Purpose: Module
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
 #include <Arduino.h>
 #include <Wire.h>
 

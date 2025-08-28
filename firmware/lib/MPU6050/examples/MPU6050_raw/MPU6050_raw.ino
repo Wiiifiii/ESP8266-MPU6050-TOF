@@ -1,3 +1,10 @@
+/*
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: firmware/lib/MPU6050/examples/MPU6050_raw/MPU6050_raw.ino
+ * Purpose: Module
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
 // I2C device class (I2Cdev) demonstration Arduino sketch for MPU6050 class
 // 10/7/2011 by Jeff Rowberg <jeff@rowberg.net>
 // Updates should (hopefully) always be available at https://github.com/jrowberg/i2cdevlib

@@ -1,3 +1,10 @@
+/*
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: firmware/lib/MPU6050/examples/MPU6050_DMP6_ESPWiFi/MPU6050_DMP6_ESPWiFi.ino
+ * Purpose: Module
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
 /* ============================================
 I2Cdev device library code is placed under the MIT license
 Copyright (c) 2012 Jeff Rowberg

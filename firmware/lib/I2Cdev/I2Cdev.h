@@ -1,3 +1,10 @@
+/*
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: firmware/lib/I2Cdev/I2Cdev.h
+ * Purpose: Module
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
 // I2Cdev library collection - Main I2C device class header file
 // Abstracts bit and byte I2C R/W functions into a convenient class
 // 2013-06-05 by Jeff Rowberg <jeff@rowberg.net>

@@ -1,3 +1,10 @@
+/*
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: firmware/lib/MPU6050/examples/IMU_Zero/IMU_Zero.ino
+ * Purpose: Module
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
 // MPU6050 offset-finder, based on Jeff Rowberg's MPU6050_RAW
 // 2016-10-19 by Robert R. Fenichel (bob@fenichel.net)
 

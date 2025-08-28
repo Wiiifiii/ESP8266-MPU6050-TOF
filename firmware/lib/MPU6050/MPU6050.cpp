@@ -1,3 +1,10 @@
+/*
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: firmware/lib/MPU6050/MPU6050.cpp
+ * Purpose: Module
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
 // I2Cdev library collection - MPU6050 I2C device class
 // Based on InvenSense MPU-6050 register map document rev. 2.0, 5/19/2011 (RM-MPU-6000A-00)
 // 8/24/2011 by Jeff Rowberg <jeff@rowberg.net>

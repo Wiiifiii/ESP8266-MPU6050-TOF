@@ -1,4 +1,11 @@
 /**
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: app/components/HistoryList.js
+ * Purpose: UI component
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
+/**
  * Module: app/components/HistoryList.js
  * Purpose: Render a simple list of lap summaries for history.
  */

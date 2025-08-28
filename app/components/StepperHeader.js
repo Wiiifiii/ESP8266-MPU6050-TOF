@@ -1,3 +1,10 @@
+/**
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: app/components/StepperHeader.js
+ * Purpose: UI component
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
 // components/StepperHeader.js
 import React from 'react';
 import { View, Text } from 'react-native';

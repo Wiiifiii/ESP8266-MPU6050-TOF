@@ -1,3 +1,10 @@
+/**
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: app/context/LapContext.js
+ * Purpose: Module
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
 // context/LapContext.js
 import React, { createContext, useContext, useMemo, useState } from 'react';
 

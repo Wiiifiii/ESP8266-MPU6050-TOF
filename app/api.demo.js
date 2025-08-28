@@ -1,3 +1,11 @@
+// NOTE: Not used in the current demo build; kept for reference/testing.
+/**
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: app/api.demo.js
+ * Purpose: HTTP API client (real/demo, discovery)
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
 // NOTE: Currently not used in demo build; kept for future features.
 /**
  * Module: app/api.demo.js

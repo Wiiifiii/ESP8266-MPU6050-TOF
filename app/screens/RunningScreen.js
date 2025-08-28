@@ -1,4 +1,11 @@
 /**
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: app/screens/RunningScreen.js
+ * Purpose: App screen (React Native)
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
+/**
  * Module: app/screens/RunningScreen.js
  * Purpose: Live telemetry and finish detection.
  * Notes: Ends lap on fresh rising edge from Finish; dwell fallback for table tests.

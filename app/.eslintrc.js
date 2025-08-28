@@ -1,3 +1,10 @@
+/**
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: app/.eslintrc.js
+ * Purpose: Module
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
 module.exports = {
   root: true,
   env: { es6: true, node: true, browser: true },

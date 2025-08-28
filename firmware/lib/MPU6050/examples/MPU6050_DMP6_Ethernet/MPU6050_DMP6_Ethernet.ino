@@ -1,3 +1,10 @@
+/*
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: firmware/lib/MPU6050/examples/MPU6050_DMP6_Ethernet/MPU6050_DMP6_Ethernet.ino
+ * Purpose: Module
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
 // I2C device class (I2Cdev) demonstration Arduino sketch for MPU6050 class using DMP (MotionApps v2.0) over Ethernet
 // 2/27/2016 by hellphoenix
 // Based on I2C device class (I2Cdev) demonstration Arduino sketch for MPU6050 class using DMP (MotionApps v2.0) (6/21/2012 by Jeff Rowberg <jeff@rowberg.net>)

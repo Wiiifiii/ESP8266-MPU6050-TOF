@@ -1,4 +1,11 @@
 /**
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: app/hooks/useTelemetry.js
+ * Purpose: App hook (polling/stopwatch/telemetry)
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
+/**
  * Module: app/hooks/useTelemetry.js
  * Purpose: Polls Car/Start/Finish; stamps lastSeen; auto-discovers endpoints on repeated failures.
  */

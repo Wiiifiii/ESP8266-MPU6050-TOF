@@ -1,3 +1,10 @@
+/**
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: app/hooks/useLaps.ts
+ * Purpose: App hook (polling/stopwatch/telemetry)
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
 import { useEffect, useState } from 'react';
 import { lapStore, type Lap } from '../state/lapStore';
 

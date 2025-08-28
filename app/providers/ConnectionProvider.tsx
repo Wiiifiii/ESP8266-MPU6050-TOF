@@ -1,4 +1,11 @@
 /**
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: app/providers/ConnectionProvider.tsx
+ * Purpose: Context/provider
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
+/**
  * Module: app/providers/ConnectionProvider.tsx
  * Purpose: Provide live connectivity state (online/stale/offline) for Car/Start/Finish.
  * Notes: Used by optional ConnectionFooter.

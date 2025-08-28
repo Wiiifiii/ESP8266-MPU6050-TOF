@@ -1,3 +1,10 @@
+/**
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: app/hooks/useStopwatch.js
+ * Purpose: App hook (polling/stopwatch/telemetry)
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
 // app/hooks/useStopwatch.js
 /**
  * Module: app/hooks/useStopwatch.js

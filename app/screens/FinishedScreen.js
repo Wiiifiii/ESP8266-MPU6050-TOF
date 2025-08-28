@@ -1,4 +1,11 @@
 /**
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: app/screens/FinishedScreen.js
+ * Purpose: App screen (React Native)
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
+/**
  * Module: app/screens/FinishedScreen.js
  * Purpose: Show lap summary and recent history; allow new lap.
  */

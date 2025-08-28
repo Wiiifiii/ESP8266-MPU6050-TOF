@@ -1,3 +1,11 @@
+// NOTE: Not used in the current demo build; kept for reference/testing.
+/**
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: app/components/HistoryPanel.js
+ * Purpose: UI component
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
 /**
  * Module: app/components/HistoryPanel.js
  * Purpose: Show best lap pinned and list of recent laps from lapStore.

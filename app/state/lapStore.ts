@@ -1,4 +1,11 @@
 /**
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: app/state/lapStore.ts
+ * Purpose: App state (history/best lap)
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
+/**
  * Module: app/state/lapStore.ts
  * Purpose: Simple in-memory lap store used by Finished screen's History.
  * Notes: Keeps last 10 laps; pins best lap (lowest time). No persistence.

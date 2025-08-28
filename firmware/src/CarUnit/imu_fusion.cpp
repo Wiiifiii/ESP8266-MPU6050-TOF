@@ -1,3 +1,10 @@
+/*
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: firmware/src/CarUnit/imu_fusion.cpp
+ * Purpose: CAR unit firmware (IMU → accel/speed, /data)
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
 #include "imu_fusion.h"
 
 // Select backend. If your project uses Adafruit, define USE_ADAFRUIT via build_flags.

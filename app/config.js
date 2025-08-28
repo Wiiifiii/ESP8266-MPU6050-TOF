@@ -1,3 +1,10 @@
+/**
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: app/config.js
+ * Purpose: Module
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
 // app/config.js
 // export const USE_DEMO = true; // set to false on real hardware
 export const USE_DEMO = false; // real hardware

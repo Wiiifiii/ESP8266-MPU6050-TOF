@@ -1,3 +1,10 @@
+/**
+ * Project: ESP8266-MPU6050-TOF
+ * Module/File: app/api.js
+ * Purpose: HTTP API client (real/demo, discovery)
+ * Notes: Auto-generated header; behavior unchanged.
+ */
+
 // app/api.js
 /**
  * Module: app/api.js
