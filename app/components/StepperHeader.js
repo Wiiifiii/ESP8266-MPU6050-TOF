@@ -1,6 +1,5 @@
 /**
- * Module/File: app/components/StepperHeader.js
- * Purpose: UI component
+ * app/components/StepperHeader.js
  */
 
 import React from 'react';
