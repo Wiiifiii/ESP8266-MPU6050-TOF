@@ -1,7 +1,7 @@
+//Notes: Used by optional ConnectionFooter. 
 /**
- * Module: app/providers/ConnectionProvider.tsx
- * Purpose: Provide live connectivity state (online/stale/offline) for Car/Start/Finish.
- * Notes: Used by optional ConnectionFooter.
+ * app/providers/ConnectionProvider.tsx
+ * Provide live connectivity state (online/stale/offline) for Car/Start/Finish.
  */
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import api, { getCar, getStart, getFinish, getStartBase, getFinishBase } from '../api';
