@@ -1,4 +1,4 @@
-// Module/File: app/utils/metrics.js
+// app/utils/metrics.js
 
 export function computeMetrics({ readings, trackDistance, startTime, endTime }) {
   const elapsedMs = Math.max(0, (endTime ?? Date.now()) - (startTime ?? Date.now()));
