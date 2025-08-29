@@ -1,6 +1,6 @@
 /**
- * Module: app/screens/ConnectScreen.js
- * Purpose: First connectivity gate; checks Car/AP, Start, and Finish reachability; discovers bases.
+ * app/screens/ConnectScreen.js
+ * First connectivity gate; checks Car/AP, Start, and Finish reachability; discovers bases.
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, Linking } from 'react-native';
