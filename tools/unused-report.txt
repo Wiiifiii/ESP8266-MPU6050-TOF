@@ -1,3 +1,0 @@
-Bannered files: 2
-- app/api.demo.js
-- app/components/HistoryPanel.js
