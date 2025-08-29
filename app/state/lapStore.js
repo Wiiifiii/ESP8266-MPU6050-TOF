@@ -1,7 +1,7 @@
+// Notes: Keeps last 10 laps; pins best lap (lowest time). No persistence.
 /**
- * Module: app/state/lapStore.js
- * Purpose: Simple in-memory lap store used by Finished screen's History.
- * Notes: Keeps last 10 laps; pins best lap (lowest time). No persistence.
+ * app/state/lapStore.js
+ * Simple in-memory lap store used by Finished screen's History.
  */
 
 /** @typedef {{ id: string; startedAt: number; endedAt: number; timeMs: number; stats?: { maxSpeed?: number; maxAccel?: number; [k: string]: any } }} Lap */
