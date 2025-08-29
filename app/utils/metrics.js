@@ -5,7 +5,7 @@ export function computeMetrics({ readings, trackDistance, startTime, endTime }) 
   const speeds = readings.map((r) => r.speed).filter(Number.isFinite);
   const topSpeed = speeds.length ? Math.max(...speeds) : 0;
 
-  // use planar accel to avoid gravity on az if present
+  // planar accel to avoid gravity on az if present
   const accels = readings.map((r) => Math.hypot(r.ax ?? 0, r.ay ?? 0)).filter(Number.isFinite);
   const maxAccel = accels.length ? Math.max(...accels) : 0;
 
