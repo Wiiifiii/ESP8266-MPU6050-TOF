@@ -1,6 +1,6 @@
 /**
- * Module: app/screens/DistanceScreen.js
- * Purpose: Capture track distance (m) for metrics and UI context.
+ * app/screens/DistanceScreen.js
+ * Capture track distance (m) for metrics and UI context.
  */
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
