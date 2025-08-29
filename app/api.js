@@ -1,7 +1,7 @@
+// Notes: Not used when USE_DEMO=false? This file always mediates; demo wiring is in api.demo.js.
 /**
- * Module: app/api.js
- * Purpose: Unified API facade that switches between demo and real hardware endpoints.
- * Notes: Not used when USE_DEMO=false? This file always mediates; demo wiring is in api.demo.js.
+ * app/api.js
+ * Unified API facade that switches between demo and real hardware endpoints.
  */
 import axios from 'axios';
 import { USE_DEMO } from './config';
