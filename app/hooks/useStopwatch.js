@@ -1,6 +1,6 @@
 /**
- * Module: app/hooks/useStopwatch.js
- * Purpose: Lightweight elapsed time hook using requestAnimationFrame.
+ * app/hooks/useStopwatch.js
+ * Lightweight elapsed time hook using requestAnimationFrame.
  */
 import { useEffect, useRef, useState } from 'react';
 
