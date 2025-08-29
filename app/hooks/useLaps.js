@@ -1,6 +1,6 @@
 /**
- * Module/File: app/hooks/useLaps.js
- * Purpose: App hook (polling/stopwatch/telemetry)
+ * app/hooks/useLaps.js
+ * App hook (polling/stopwatch/telemetry)
  */
 
 import { useEffect, useState } from 'react';
