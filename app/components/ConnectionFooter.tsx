@@ -1,6 +1,6 @@
 /**
- * Module: app/components/ConnectionFooter.tsx
- * Purpose: Optional footer for live connectivity; controlled by SHOW_CONNECTION_FOOTER.
+ * app/components/ConnectionFooter.tsx
+ * footer for live connectivity; controlled by SHOW_CONNECTION_FOOTER.
  */
 import React from 'react';
 import { View, Text, TouchableOpacity, useWindowDimensions } from 'react-native';
