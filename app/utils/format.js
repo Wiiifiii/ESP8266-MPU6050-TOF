@@ -1,4 +1,4 @@
-// Module/File: app/utils/format.js
+// app/utils/format.js
 
 export function fmtTime(ms) {
   const s = ms / 1000;
