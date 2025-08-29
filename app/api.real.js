@@ -1,6 +1,6 @@
 /**
- * Module: app/api.real.js
- * Purpose: Direct axios clients for Car, Start, and Finish hardware endpoints.
+ * app/api.real.js
+ * Direct axios clients for Car, Start, and Finish hardware endpoints.
  */
 import axios from 'axios';
 
