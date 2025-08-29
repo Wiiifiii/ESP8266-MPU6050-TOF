@@ -1,6 +1,6 @@
 /**
- * Module: app/screens/FinishedScreen.js
- * Purpose: Show lap summary and recent history; allow new lap.
+ * app/screens/FinishedScreen.js
+ * Show lap summary and recent history; allow new lap.
  */
 import React, { useEffect } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
