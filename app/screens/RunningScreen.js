@@ -1,6 +1,6 @@
 /**
- * Module: app/screens/RunningScreen.js
- * Purpose: Live telemetry and finish detection.
+ * app/screens/RunningScreen.js
+ * Live telemetry and finish detection.
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
