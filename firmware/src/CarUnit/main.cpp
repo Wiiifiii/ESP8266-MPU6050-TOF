@@ -1,5 +1,5 @@
 /**
- * File: CarUnit/main.cpp
+ * CarUnit/main.cpp
  * Summary:
  *  - CAR: computes gravity-removed accel and speed; exposes /data; supports Auto-set Forward.
  *  - START: ToF distance; exposes /status {distanceMm, ready}.

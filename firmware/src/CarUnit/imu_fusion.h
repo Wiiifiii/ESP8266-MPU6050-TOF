@@ -1,6 +1,6 @@
 /**
- * File: CarUnit/imu_fusion.h
- * Role: CAR unit firmware (IMU fusion interface)
+ * CarUnit/imu_fusion.h
+ * CAR unit firmware (IMU fusion interface)
  * Summary:
  *  - Gravity removal: subtract gravity estimated from pitch/roll before integrating.
  *  - LPF: low-pass filter linear acceleration to reduce noise.

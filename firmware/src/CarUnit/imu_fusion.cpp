@@ -1,6 +1,6 @@
 /*
- * Module/File: firmware/src/CarUnit/imu_fusion.cpp
- * Purpose: CAR unit firmware (IMU → accel/speed, /data)
+ * firmware/src/CarUnit/imu_fusion.cpp
+ * CAR unit firmware (IMU → accel/speed, /data)
  */
 
 #include "imu_fusion.h"
