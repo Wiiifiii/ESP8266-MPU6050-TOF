@@ -1,7 +1,7 @@
+ // Notes: Blocks when Finish is too close to avoid false start.
 /**
- * Module: app/screens/ReadyScreen.js
- * Purpose: Wait until Start sensor is within READY threshold; optional auto-start and Auto-set Forward.
- * Notes: Blocks when Finish is too close to avoid false start.
+ * app/screens/ReadyScreen.js
+ * Wait until Start sensor is within READY threshold; optional auto-start and Auto-set Forward.
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
