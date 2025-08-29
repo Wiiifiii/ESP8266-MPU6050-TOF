@@ -1,6 +1,6 @@
 /**
- * Module: app/screens/DriveToStartScreen.js
- * Purpose: Guide user to move car into near zone for the Start sensor.
+ * app/screens/DriveToStartScreen.js
+ * Guide user to move car into near zone for the Start sensor.
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
