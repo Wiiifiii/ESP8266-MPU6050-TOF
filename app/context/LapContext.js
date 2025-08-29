@@ -1,4 +1,4 @@
-// Module/File: app/context/LapContext.js
+// app/context/LapContext.js
 
 import React, { createContext, useContext, useMemo, useState } from 'react';
 
