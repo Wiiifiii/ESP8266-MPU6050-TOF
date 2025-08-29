@@ -1,7 +1,7 @@
 // NOTE: Not used in the current demo build; kept for reference/testing.
 /**
- * Module: app/components/HistoryPanel.js
- * Purpose: Show best lap pinned and list of recent laps from lapStore.
+ * app/components/HistoryPanel.js
+ * Show best lap pinned and list of recent laps from lapStore.
  */
 import React from 'react';
 import { View, Text } from 'react-native';
