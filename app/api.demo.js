@@ -1,7 +1,7 @@
 // NOTE: Currently not used in demo build; kept for future features.
 /**
- * Module: app/api.demo.js
- * Purpose: Mock endpoints for offline testing. Not used when USE_DEMO=false.
+ * app/api.demo.js
+ * Mock endpoints for offline testing. Not used when USE_DEMO=false.
  */
 let demoStartedAt = 0;
 
