@@ -1,6 +1,6 @@
 /**
- * Module: app/hooks/useTelemetry.js
- * Purpose: Polls Car/Start/Finish; stamps lastSeen; auto-discovers endpoints on repeated failures.
+ * Mapp/hooks/useTelemetry.js
+ * Polls Car/Start/Finish; stamps lastSeen; auto-discovers endpoints on repeated failures.
  */
 import { useEffect, useRef, useState } from 'react';
 import { useStopwatch } from './useStopwatch';
