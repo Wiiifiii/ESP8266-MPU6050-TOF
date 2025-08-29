@@ -1,6 +1,6 @@
 /**
- * Module: app/components/HistoryList.js
- * Purpose: Render a simple list of lap summaries for history.
+ * app/components/HistoryList.js
+ * Render a simple list of lap summaries for history.
  */
 import React from 'react';
 import { View, Text } from 'react-native';
