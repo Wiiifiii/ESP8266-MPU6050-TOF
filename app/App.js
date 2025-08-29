@@ -5,7 +5,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { ConnectionProvider } from './providers/ConnectionProvider';
 import ConnectionFooter from './components/ConnectionFooter';
 
-import RootNavigator from './navigation/RootNavigator'; // <-- or './RootNavigator'
+import RootNavigator from './navigation/RootNavigator'; // or './RootNavigator'
 import { LapProvider } from './context/LapContext';
 import { SHOW_CONNECTION_FOOTER, DISCOVER_UNITS_ON_BOOT } from './config';
 import { discoverUnits, ensureDistinctRoles } from './api';
